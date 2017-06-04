@@ -16,7 +16,7 @@
         "meat"
     ],
     "require": {
-        "symfony/console": "^3.2",
+        "symfony/console": "^3.3",
         "symfony/process": "^3.3",
         "m1/env": "^2.1"   
     }
