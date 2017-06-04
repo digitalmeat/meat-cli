@@ -1,0 +1,23 @@
+{
+    "name": "meat/meat-cli",
+    "description": "Meat CLI interface to install and manage projects easily",
+    "authors": [
+        {
+            "name": "Gonzalo De Spirito",
+            "email": "gonzunigad@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Meat\\Cli\\": "src/"
+        }
+    },
+    "bin": [
+        "meat"
+    ],
+    "require": {
+        "symfony/console": "^3.2",
+        "symfony/process": "^3.3",
+        "m1/env": "^2.1"   
+    }
+}
