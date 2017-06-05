@@ -8,6 +8,7 @@ use RecursiveIteratorIterator;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 
@@ -39,7 +40,13 @@ class InstallCommand extends SymfonyCommand
             ->addArgument(
                 'folder',
                 InputArgument::OPTIONAL,
-                'Folder where we will install the app. When not provided, the name of the project is used');
+                'Folder where we will install the app. When not provided, the name of the project is used')
+            ->addOption(
+                'valet',
+                'valet',
+                InputOption::VALUE_OPTIONAL,
+                'Try to configure valet with the defined domain',
+                false);
 
         $this->addConfig($this->getDefaultConfiguration());
     }
@@ -71,18 +78,21 @@ class InstallCommand extends SymfonyCommand
             $dotenv = !file_exists('.env') && file_exists('.env.example');
         }
 
-        if ($dotenv) {
+        if ($dotenv === true) {
             $example = new Parser(file_get_contents(getcwd() . DIRECTORY_SEPARATOR . '.env.example'));
             $array = $example->getContent();
             $this->info('Creating .env interactively');
             $newenv = [];
             foreach($array as $key => $value) {
-                $newenv[$key] = $key . '=' . $this->ask($key . ' (' . $value . '): ', $value);
+                $autocompletes = [$value];
+                if ($key == 'DB_NAME' || $key == 'DATABASE_NAME') array_push($autocompletes, $project);
+                if ($key == 'WP_HOME') array_push($autocompletes, 'http://' . $project . '.dev');
+                if ($key == 'WP_SITEURL') array_push($autocompletes, '$WP_HOME/cms');
+                $newenv[$key] = $key . '=' . $this->ask($key . ' (' . $value . '): ', null, $autocompletes);
             }
 
             file_put_contents(getcwd() . DIRECTORY_SEPARATOR . '.env', implode(PHP_EOL, $newenv));
         }
-
 
         if (!$this->projectHasAMeatFile()) {
             $this->info('File ' . $this->meatFilename() . ' not found. Using default configuration.');
@@ -106,8 +116,14 @@ class InstallCommand extends SymfonyCommand
             $this->runProcess($command);
         }
 
-        if ($driver = $this->config('envoy')) {
+        if ($this->config('envoy') === true) {
             $this->info('Running envoy...');
+            $this->runProcess('envoy run sync_database');
+            $this->runProcess('envoy run pull_images');
+        }
+
+        if ($this->config('migrate') || ($this->config('migrate') == 'auto' && $this->isLaravel())) {
+            $this->info('Running Laravel Migrations...');
             $this->runProcess('envoy run sync_database');
             $this->runProcess('envoy run pull_images');
         }
@@ -116,8 +132,28 @@ class InstallCommand extends SymfonyCommand
             $this->runProcess($cmd);
         }
 
+        if ($domain = $this->option('valet')) {
+            if ($domain === true) $domain = $project;
+            $this->info('Making sure valet is configured with domain ' . $domain . '...');
+            if ($this->isThemosis()) {
+                $this->info('Themosis project founded. Fixing valet routes');
+                chdir('htdocs');
+                $this->runProcess('valet link ' . $domain);
+            }
+        }
 
 
+
+    }
+
+    public function isThemosis()
+    {
+        return file_exists('library/Thms/Config/Environment.php');
+    }
+
+    public function isLaravel()
+    {
+        return file_exists('artisan');
     }
     /**
      * @return string
@@ -178,7 +214,8 @@ class InstallCommand extends SymfonyCommand
             'bower' => false,
             'fetch_database_from_server' => true,
             'dotenv' => 'auto',
-            'envoy' => true,
+            'envoy' => 'auto',
+            'artisan_migrate'   => 'auto',
             'scripts' => [
                 'pre-install' => null,
                 'post-install' => null,

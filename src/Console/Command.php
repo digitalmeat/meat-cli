@@ -67,11 +67,11 @@ trait Command
      * @param  string  $question
      * @return string
      */
-    public function ask($question, $default = null)
+    public function ask($question, $default = null, $autocomplete = null)
     {
         $question = '<comment>'.$question.'</comment>';
         $question = new Question($question, $default);
-        $question->setAutocompleterValues([$default]);
+        if ($autocomplete)$question->setAutocompleterValues($autocomplete);
         return $this->getHelperSet()->get('question')->ask($this->input, $this->output, $question);
     }
 
@@ -120,13 +120,13 @@ trait Command
         return $this->line('<info>' . $line . '</info>');
     }
 
-    public function runProcess($command, $print_output = null)
+    public function runProcess($command, $print_output = null, $timeout = null)
     {
         if ($print_output == null) {
             $print_output = $this->option('verbose');
         }
         $process = new Process($command);
-
+        $process->setTimeout($timeout);
         if ($print_output) {
             return $process->run(function ($type, $buffer) {
                 $this->output->write($buffer);
