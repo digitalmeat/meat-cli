@@ -65,7 +65,7 @@ class MountCommand extends MeatCommand
     {
         $this->project = $this->argument('project-code');
         $this->folder_name = $this->argument('folder') ? : $this->project;
-        $this->path = $this->argument('folder') ? : '.';
+        $this->path = $this->folder_name ? : '.';
         $this->cloneRepositoryOrCheckDirectory()
             ->changeWorkingDirectory($this->path)
             ->runPreInstallScripts()
