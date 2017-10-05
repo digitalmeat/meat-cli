@@ -4,6 +4,7 @@ namespace Meat\Cli\Console;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Process\Process;
@@ -62,6 +63,32 @@ trait Command
     }
 
     /**
+     * @param $question
+     * @param bool $default
+     *
+     * @return bool
+     */
+    public function confirm($question, $default = true)
+    {
+        $helper = $this->getHelper('question');
+        $question = '<comment>'.$question.'</comment>';
+        $question = new ConfirmationQuestion($question, $default);
+
+        return $helper->ask($this->input, $this->output, $question, '/^(y|j)/i');
+    }
+
+    public function choice($question, $default = null, $options = null, $errorMessage = '')
+    {
+        $question = '<comment>'.$question.'</comment>';
+        $question = new ChoiceQuestion($question, $options, $default);
+
+
+        $question->setErrorMessage('Invalid input');
+
+        return $this->getHelperSet()->get('question')->ask($this->input, $this->output, $question);
+    }
+
+    /**
      * Ask the user the given question.
      *
      * @param  string  $question
@@ -71,7 +98,10 @@ trait Command
     {
         $question = '<comment>'.$question.'</comment>';
         $question = new Question($question, $default);
-        if ($autocomplete)$question->setAutocompleterValues($autocomplete);
+
+        if ($autocomplete) {
+            $question->setAutocompleterValues($autocomplete);
+        }
         return $this->getHelperSet()->get('question')->ask($this->input, $this->output, $question);
     }
 
@@ -120,7 +150,7 @@ trait Command
         return $this->line('<info>' . $line . '</info>');
     }
 
-    public function runProcess($command, $print_output = null, $timeout = null)
+    public function runProcess($command, $print_output = true, $timeout = null)
     {
         if ($print_output == null) {
             $print_output = $this->option('verbose');
@@ -132,7 +162,7 @@ trait Command
                 $this->output->write($buffer);
             });
         }
-
-        return $process->run();
+        $process->run();
+        return $process;
     }
 }
