@@ -18,16 +18,24 @@ class ConfigurationHandler
         return $this->get_user_home_directory() . '/.meat';
     }
 
-    public function save(array $config)
+    public function save(array $config, $merge = true)
     {
-        $currentConfiguration = $this->get();
+        $newConfiguration = $config;
+        if ($merge) {
+            $currentConfiguration = $this->all();
+            $newConfiguration = array_merge($config, $currentConfiguration);
+        }
 
-        $newConfiguration = array_merge($config, $currentConfiguration);
         file_put_contents($this->getConfigurationPath(), json_encode($newConfiguration, JSON_PRETTY_PRINT));
 
         return $this;
     }
-    public function get()
+
+    public function get($config)
+    {
+        return $this->all()[$config] ?? null;
+    }
+    public function all()
     {
         $file = $this->getConfigurationPath();
         if (!$this->configurationFileExists()) {

@@ -1,6 +1,8 @@
 <?php
 namespace Meat\Cli\Console;
 
+use Meat\Cli\Helpers\MeatAPI;
+
 class InstallCommand extends MeatCommand
 {
 
@@ -28,6 +30,7 @@ class InstallCommand extends MeatCommand
             }
         }
         $this->askDatabaseInformation();
+        $this->askMeatCredentials();
         $this->finishMessage();
 
     }
@@ -53,5 +56,19 @@ class InstallCommand extends MeatCommand
         $this->info('==========================================');
         $this->info('Installation complete!');
         $this->info('==========================================');
+    }
+    private function askMeatCredentials()
+    {
+        $this->info('');
+        $this->info('Please enter your MEAT credentials');
+        $this->info('==========================================');
+        $user = $this->ask('MEAT Email: ');
+        $pass = $this->secret('MEAT Password: ');
+
+        $access_token = (new MeatAPI())->login($user, $pass);
+        var_dump($access_token);
+        if ($access_token) {
+            config(['access_token' => $access_token]);
+        }
     }
 }

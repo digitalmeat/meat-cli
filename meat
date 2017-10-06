@@ -6,6 +6,9 @@ if (file_exists(__DIR__.'/vendor/autoload.php')) {
 } else {
     require __DIR__.'/../../autoload.php';
 }
+
+require __DIR__ . '/src/helpers.php';
+
 $app = new Symfony\Component\Console\Application('Meat CLI', '0.1.0');
 $app->add(new Meat\Cli\Console\MountCommand);
 $app->add(new Meat\Cli\Console\InstallCommand);
