@@ -47,69 +47,45 @@ class CreateCommand extends MeatCommand
      */
     public function fire()
     {
-        /*$project = $this->api->setupProject('1', [
-            'bitbucket' => true,
-            'staging' => true,
-            'trello' => true,
-            'slack' => true
-        ]);
-        var_dump($project);
-        die;*/
 
-        $type = $this->choice('Select a base scaffolding', [
-            'themosis' => 'Themosis',
-            'laravel' => 'Laravel',
-            'blank' => 'Blank'
-        ], 'blank');
+        list($type, $name) = $this->askTypeAndName();
+        $project = $this->askCodeAndCreateProject($name, $type);
+        $folder = $this->askForInstallationDirectory($project);
 
-        $this->info($type . ' selected');
-
-        $name = $this->ask('Project name: ', null, null, true);
-        $code = str_slug($name);
-        while(true) {
-            $code = $this->ask("Project code ($code): ",$code, null, true);
-
-            try {
-                $project = $this->createProjectOnMeatApi($name, $code, $type);
-                break;
-            } catch (ClientException $e) {
-                $this->error(json_decode($e->getResponse()->getBody()->getContents(), true)['msg']);
-            }
-        }
-
-        $folder = getcwd() . DIRECTORY_SEPARATOR .  $code;
-        while(true) {
-            $folder = $this->ask("Installation folder ($folder): ", $folder);
-            if (!file_exists($folder)) {
-                break;
-            }
-            $this->error('This directory already exists... ');
-        }
-
-        $this->folder = $folder;
-
-        $this->installBaseRepository($type)
+        $this->installBaseScaffolding($type)
             ->changeWorkingDirectory($folder);
 
+        $bitbucket = $this->confirm('Create Bitbucket repository? (Y/n): ');
+        if ($bitbucket) {
+            $this->info('Setting up bitbucket repository...');
+            $project = $this->api->setupProjectBitbucket($project['id']);
+        }
 
-
-        $bitbucket = $this->confirm('Create Bitbucker repository? (Y/n): ');
         $staging = $bitbucket && $this->confirm('Create staging on Laravel Forge? (Y/n): ');
+        if ($staging) {
+            $this->info('Setting up staging...');
+            $project = $this->api->setupProjectForge($project['id'], get_project_assets_compilation_script('production'));
+        }
+
         $trello = $this->confirm('Create Trello Board? (Y/n): ');
+        if ($trello) {
+            $this->info('Setting up Trello...');
+            $project = $this->api->setupProjectTrello($project['id']);
+        }
+
         $slack = $this->confirm('Create Slack Channel? (Y/n): ');
+        if ($slack) {
+            $this->info('Setting up Slack...');
+            $project = $this->api->setupProjectSlack($project['id']);
+        }
 
-        $this->info('Setting up project...');
 
-        $project = $this->api->setupProject($project['id'], [
-            'bitbucket' => $bitbucket,
-            'staging' => $staging,
-            'trello' => $trello,
-            'slack' => $slack
-        ]);
+
 
         if ($bitbucket) {
             $this->info('Setting newly created repository as a git remote');
             $this->setAsNewGitRepository($this->getRemoteUrlByProject($project));
+            $this->info('Repository added to remote origin successfully');
         }
         
         $this->line('');
@@ -141,7 +117,7 @@ class CreateCommand extends MeatCommand
      * @param $base
      * @return $this
      */
-    private function installBaseRepository($base)
+    private function installBaseScaffolding($base)
     {
         $folder = $this->folder;
         $command = $this->getCreateCommandByProjectType($base, $folder);
@@ -198,6 +174,63 @@ class CreateCommand extends MeatCommand
     protected function getRemoteUrlByProject($project)
     {
         return 'git@bitbucket:' . $project['repo_full_name'] . '.git';
+    }
+    /**
+     * @param $name
+     * @param $type
+     * @return mixed
+     */
+    protected function askCodeAndCreateProject($name, $type)
+    {
+        $code = str_slug($name);
+        $project = false;
+        while (true) {
+            $code = $this->ask("Project code ($code): ", $code, null, true);
+
+            try {
+                $project = $this->createProjectOnMeatApi($name, $code, $type);
+                break;
+            } catch (ClientException $e) {
+                $this->error(json_decode($e->getResponse()->getBody()->getContents(), true)['msg']);
+            }
+        }
+
+        return $project;
+    }
+    /**
+     * @return array
+     */
+    protected function askTypeAndName()
+    {
+        $type = $this->choice('Select a base scaffolding', [
+            'themosis' => 'Themosis',
+            'laravel' => 'Laravel',
+            'blank' => 'Blank'
+        ], 'blank');
+
+        $this->info($type . ' selected');
+        $name = $this->ask('Project name: ', null, null, true);
+
+        return array($type, $name);
+    }
+    /**
+     * @param $project
+     * @return string
+     */
+    protected function askForInstallationDirectory($project)
+    {
+        $folder = getcwd() . DIRECTORY_SEPARATOR . $project->code;
+        while (true) {
+            $folder = $this->ask("Installation folder ($folder): ", $folder);
+            if (!file_exists($folder)) {
+                break;
+            }
+            $this->error('This directory already exists... ');
+        }
+
+        $this->folder = $folder;
+
+        return $folder;
     }
 
 }

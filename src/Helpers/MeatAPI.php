@@ -98,9 +98,13 @@ class MeatAPI
         return $this->get('users');
     }
 
-    public function getProjectById($project_id)
+    /**
+     * @param $project string Project ID or Code
+     * @return mixed
+     */
+    public function getProject($project)
     {
-        return $this->get('projects/' . $project_id);
+        return $this->get('projects/' . $project);
     }
 
     /**
@@ -120,11 +124,51 @@ class MeatAPI
 
     /**
      * @param $project_id
+     * @return mixed
+     */
+    public function setupProjectBitbucket($project_id, $code = null)
+    {
+        return $this->post("projects/{$project_id}/setup/bitbucket", ['code' => $code]);
+    }
+
+    /**
+     * @param $project_id
      * @param $options
      * @return mixed
      */
-    public function setupProject($project_id, $options)
+    public function setupProjectTrello($project_id)
     {
-        return $this->post("projects/{$project_id}/setup", $options);
+        return $this->post("projects/{$project_id}/setup/trello");
     }
+
+    /**
+     * @param $project_id
+     * @param $options
+     * @return mixed
+     */
+    public function setupProjectSlack($project_id)
+    {
+        return $this->post("projects/{$project_id}/setup/slack");
+    }
+
+    /**
+     * @param $project_id
+     * @param $options
+     * @return mixed
+     */
+    public function setupProjectForge($project_id, $assets_scripts = 'npm i && npm run production')
+    {
+        //@TODO: No enviar el comando de compilación de assets. Lo mejor sería correr el meat mount directamente en el server para asegurarnos de montarlo correctamente
+        return $this->post("projects/{$project_id}/setup/forge", [
+            'assets_script' => $assets_scripts
+        ]);
+    }
+
+    public function createRepository($code)
+    {
+        return $this->post('create-repository', [
+            'code' => $code
+        ]);
+    }
+
 }

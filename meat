@@ -1,6 +1,8 @@
 #!/usr/bin/env php
 <?php
 
+use GuzzleHttp\Exception\ClientException;
+
 if (file_exists(__DIR__.'/vendor/autoload.php')) {
     require __DIR__.'/vendor/autoload.php';
 } else {
@@ -14,6 +16,12 @@ $app->add(new Meat\Cli\Console\MountCommand);
 $app->add(new Meat\Cli\Console\InstallCommand);
 $app->add(new Meat\Cli\Console\CreateCommand);
 $app->add(new Meat\Cli\Console\WhoAmICommand);
+$app->add(new Meat\Cli\Console\ProjectInfoCommand);
+$app->add(new Meat\Cli\Console\CreateBitbucketRepositoryCommand);
 
 
-$app->run();
+try {
+    $app->run();
+} catch (ClientException $exception) {
+    (new \Meat\Cli\Helpers\ExceptionHandler())->handle($exception);
+}

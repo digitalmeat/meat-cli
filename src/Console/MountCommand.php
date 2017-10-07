@@ -17,8 +17,6 @@ class MountCommand extends MeatCommand
 {
     use CanCloneRepositories;
 
-    /** @var array $config */
-    private $config = [];
     /**
      * @var
      */
@@ -59,9 +57,6 @@ class MountCommand extends MeatCommand
                 InputOption::VALUE_NONE,
                 'Prevent browser from opening app url');
 
-
-        $this->addConfig($this->getDefaultConfiguration());
-
     }
 
     /**
@@ -85,7 +80,6 @@ class MountCommand extends MeatCommand
             ->runPreInstallScripts()
             ->configureDotEnv()
             ->createDatabaseIfNeeded()
-            ->addMeatFileConfiguration()
             ->composerInstall()
             ->npmInstall()
             ->compileAssets()
@@ -117,121 +111,11 @@ class MountCommand extends MeatCommand
     }
 
     /**
-     * @return string
-     */
-    protected function meatFilename()
-    {
-        return 'meat.json';
-    }
-
-    /**
-     * @return bool
-     */
-    protected function projectHasAMeatFile()
-    {
-        return file_exists(getcwd() . DIRECTORY_SEPARATOR . $this->meatFilename());
-    }
-
-
-
-    /**
-     * @return mixed
-     */
-    protected function getMeatFileConfiguration()
-    {
-        
-        return json_decode(file_get_contents($this->meatFilename()));
-    }
-
-    /**
-     * @return array
-     */
-    protected function getDefaultConfiguration()
-    {
-        return [
-            'composer' => true,
-            'npm' => true,
-            'bower' => false,
-            'fetch_database_from_server' => true,
-            'dotenv' => 'auto',
-            'envoy' => 'auto',
-            'valet' => 'auto',
-            'artisan_migrate'   => 'auto',
-            'scripts' => [
-                'pre-install' => null,
-                'post-install' => null,
-            ],
-            'sync_folders' =>  'auto',
-            'assets' => [
-                'driver' => 'mix',
-                'drivers' => [
-                    'mix' => [
-                        'dev' => 'npm run dev',
-                        'watch' => 'npm run watch',
-                        'production' => 'npm run production'
-                    ],
-                    'elixir' => [
-                        'dev' => 'gulp',
-                        'watch' => 'gulp watch',
-                        'production' => 'gulp --production'
-                    ],
-                    'gulp' => [
-                        'dev' => 'gulp',
-                        'watch' => 'gulp',
-                        'production' => 'gulp build'
-                    ]
-                ]
-            ]
-        ];
-    }
-
-    /**
-     * @param $key
-     * @return mixed|null
-     */
-    protected function config($key)
-    {
-        return (isset($this->config[$key])) ? $this->config[$key] : null;
-    }
-
-    /**
-     * @param $config
-     * @return $this
-     */
-    protected function addConfig($config)
-    {
-        if (!is_array($config)) {
-            return $this;
-        }
-        $this->config = array_merge_recursive($config, $this->config);
-        $this->config = array_merge($this->preloadAsDotNotation(), $this->config);
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    protected function preloadAsDotNotation()
-    {
-        $ritit = new RecursiveIteratorIterator(new RecursiveArrayIterator($this->config));
-        $result = array();
-        foreach ($ritit as $leafValue) {
-            $keys = array();
-            foreach (range(0, $ritit->getDepth()) as $depth) {
-                $keys[] = $ritit->getSubIterator($depth)->key();
-            }
-            $result[join('.', $keys)] = $leafValue;
-        }
-
-        return $result;
-    }
-
-    /**
      * @return $this
      */
     protected function runPreInstallScripts()
     {
-        if ($cmd = $this->config('scripts.pre-install')) {
+        if ($cmd = project_config('scripts.pre-install')) {
             $this->runProcess($cmd);
         }
 
@@ -243,7 +127,7 @@ class MountCommand extends MeatCommand
      */
     protected function configureDotEnv()
     {
-        $shouldConfigureDotEnv = $this->config('dotenv');
+        $shouldConfigureDotEnv = project_config('dotenv');
         if ($shouldConfigureDotEnv === 'auto') {
             $shouldConfigureDotEnv = !file_exists('.env') && file_exists('.env.example');
         }
@@ -275,26 +159,14 @@ class MountCommand extends MeatCommand
         return $this;
     }
 
-    /**
-     * @return $this
-     */
-    protected function addMeatFileConfiguration()
-    {
-        if (!$this->projectHasAMeatFile()) {
-            $this->info('File ' . $this->meatFilename() . ' not found. Using default configuration.');
-        } else {
-            $this->addConfig($this->getMeatFileConfiguration());
-        }
 
-        return $this;
-    }
 
     /**
      * @return $this
      */
     protected function composerInstall()
     {
-        if ($this->config('composer')) {
+        if (project_config('composer')) {
             $this->info('Installing composer dependencies');
             $this->runProcess('composer install --prefer-dist');
         }
@@ -307,9 +179,9 @@ class MountCommand extends MeatCommand
      */
     protected function npmInstall()
     {
-        if ($this->config('npm')) {
+        if (project_config('npm')) {
             $this->info('Installing NPM dependencies');
-            $this->runProcess('npm install');
+            $this->runProcess('yarn install || npm install');
         }
 
         return $this;
@@ -320,9 +192,9 @@ class MountCommand extends MeatCommand
      */
     protected function compileAssets()
     {
-        $driver = $this->config('assets.driver');
+        $driver = project_config('assets.driver');
         if ($driver) {
-            $command = $this->config("assets.drivers.$driver.dev");
+            $command = get_project_assets_compilation_script('dev');
             $this->info('Compiling assets: ' . $command);
             $this->runProcess($command);
         }
@@ -335,7 +207,7 @@ class MountCommand extends MeatCommand
      */
     protected function syncDataFromServer()
     {
-        $envoy = $this->config('envoy');
+        $envoy = project_config('envoy');
         if ($envoy == 'auto') {
             if (file_exists('envoy.blade.php') || file_exists('Envoy.blade.php')) {
                 $envoy = true;
@@ -359,7 +231,7 @@ class MountCommand extends MeatCommand
      */
     protected function runMigrationsIfLaravel()
     {
-        if ($this->config('migrate') || ($this->config('migrate') == 'auto' && $this->isLaravel())) {
+        if (project_config('migrate') || (project_config('migrate') == 'auto' && $this->isLaravel())) {
             $this->info('Running Laravel Migrations...');
             $this->runProcess('envoy run sync_database');
             $this->runProcess('envoy run pull_images');
@@ -373,7 +245,7 @@ class MountCommand extends MeatCommand
      */
     protected function runPostInstallScripts()
     {
-        if ($cmd = $this->config('scripts.post-install')) {
+        if ($cmd = project_config('scripts.post-install')) {
             $this->runProcess($cmd);
         }
 
