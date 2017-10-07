@@ -3,6 +3,7 @@
 namespace Meat\Cli\Console;
 
 use M1\Env\Parser;
+use Meat\Cli\Traits\CanCloneRepositories;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use Symfony\Component\Console\Input\InputArgument;
@@ -14,6 +15,8 @@ use Symfony\Component\Console\Input\InputOption;
  */
 class MountCommand extends MeatCommand
 {
+    use CanCloneRepositories;
+
     /** @var array $config */
     private $config = [];
     /**
@@ -27,7 +30,7 @@ class MountCommand extends MeatCommand
     /**
      * @var
      */
-    private $path;
+    private $working_path;
 
     /**
      * Configure the command options.
@@ -36,13 +39,11 @@ class MountCommand extends MeatCommand
      */
     protected function configure()
     {
-        $info = pathinfo(getcwd());
         $this->setName('mount')->setDescription('Clone and install a MEAT project')
             ->addArgument(
                 'project-code',
                 InputArgument::OPTIONAL,
-                'Slug of the project. When is not provided, the name of the current folder is used',
-                $info['basename'])
+                'Slug of the project. When is not provided, the name of the current folder is used')
             ->addArgument(
                 'folder',
                 InputArgument::OPTIONAL,
@@ -51,11 +52,18 @@ class MountCommand extends MeatCommand
                 'no-images',
                 'k',
                 InputOption::VALUE_NONE,
-                'Prevent envoy from downloading all the images and user files');
+                'Prevent envoy from downloading all the images and user files')
+            ->addOption(
+                'no-browser',
+                'b',
+                InputOption::VALUE_NONE,
+                'Prevent browser from opening app url');
 
 
         $this->addConfig($this->getDefaultConfiguration());
+
     }
+
     /**
      * Execute the command.
      * @return void
@@ -63,11 +71,17 @@ class MountCommand extends MeatCommand
      */
     protected function fire()
     {
-        $this->project = $this->argument('project-code');
-        $this->folder_name = $this->argument('folder') ? : $this->project;
-        $this->path = $this->folder_name ? : '.';
+        $info = pathinfo(getcwd());
+        $this->project = $this->argument('project-code') ?? $info['basename'];
+        $this->folder_name = $this->argument('folder') ?? $this->project;
+        $this->working_path = !$this->argument('folder') && !$this->argument('project-code') ? '.' : $this->folder_name;
+        /*var_dump($this->project);
+        var_dump($this->folder_name);
+        var_dump($this->working_path);*/
+
         $this->cloneRepositoryOrCheckDirectory()
-            ->changeWorkingDirectory($this->path)
+            ->changeWorkingDirectory($this->working_path)
+            ->notifyProjectInstallation()
             ->runPreInstallScripts()
             ->configureDotEnv()
             ->createDatabaseIfNeeded()
@@ -77,7 +91,8 @@ class MountCommand extends MeatCommand
             ->compileAssets()
             ->syncDataFromServer()
             ->runMigrationsIfLaravel()
-            ->runPostInstallScripts();
+            ->runPostInstallScripts()
+            ->openBrowser();
 
         $this->info('Process complete!');
 
@@ -85,22 +100,22 @@ class MountCommand extends MeatCommand
 
     }
 
+    /**
+     * @return bool
+     */
     public function isThemosis()
     {
         return file_exists('library/Thms/Config/Environment.php');
     }
 
+    /**
+     * @return bool
+     */
     public function isLaravel()
     {
         return file_exists('artisan');
     }
-    /**
-     * @return string
-     */
-    protected function bitbucketUsername()
-    {
-        return 'digitalmeatdev';
-    }
+
     /**
      * @return string
      */
@@ -116,29 +131,9 @@ class MountCommand extends MeatCommand
     {
         return file_exists(getcwd() . DIRECTORY_SEPARATOR . $this->meatFilename());
     }
-    /**
-     * @param $project
-     * @param $folder
-     * @throws \Exception
-     */
-    protected function cloneRepository($project, $folder)
-    {
-        $repo_clone = 'git@bitbucket.org:' . $this->bitbucketUsername() . '/' . $project . '.git';
-        $this->info("Cloning $repo_clone repository on $folder");
-        $command = "git clone $repo_clone $folder";
-        $this->runProcess($command);
-    }
 
-    function execPrint($command) {
-        $result = array();
-        $return_status = null;
-        exec($command, $result, $return_status);
-        foreach ($result as $line) {
-            print($line . "\n");
-        }
 
-        return $return_status;
-    }
+
     /**
      * @return mixed
      */
@@ -233,35 +228,6 @@ class MountCommand extends MeatCommand
 
     /**
      * @return $this
-     * @throws \Exception
-     */
-
-    protected function cloneRepositoryOrCheckDirectory()
-    {
-        if (file_exists($this->path)) {
-            $this->line("The folder $this->path already exists...");
-            if (!file_exists($this->path . DIRECTORY_SEPARATOR . '.git')) {
-                throw new \Exception('Folder already exists and could not find a project');
-            }
-            $this->setProjectNameBasedOnGitRepository();
-        } else {
-            $this->cloneRepository($this->project, $this->folder_name);
-        }
-
-        return $this;
-    }
-    /**
-     */
-    protected function changeWorkingDirectory($folder)
-    {
-        if (!chdir($folder)) {
-            throw new \Exception('Could not change the directory to ' . $folder);
-        }
-
-        return $this;
-    }
-    /**
-     * @return $this
      */
     protected function runPreInstallScripts()
     {
@@ -271,6 +237,7 @@ class MountCommand extends MeatCommand
 
         return $this;
     }
+
     /**
      * @return $this
      */
@@ -307,6 +274,7 @@ class MountCommand extends MeatCommand
 
         return $this;
     }
+
     /**
      * @return $this
      */
@@ -320,6 +288,7 @@ class MountCommand extends MeatCommand
 
         return $this;
     }
+
     /**
      * @return $this
      */
@@ -332,6 +301,7 @@ class MountCommand extends MeatCommand
 
         return $this;
     }
+
     /**
      * @return $this
      */
@@ -410,13 +380,6 @@ class MountCommand extends MeatCommand
         return $this;
     }
 
-
-    protected function setProjectNameBasedOnGitRepository()
-    {
-        $process = $this->runProcess('git remote get-url origin', false);
-        $this->project = substr(explode($this->bitbucketUsername(), trim($process->getOutput()))[1], 1, -4);
-        $this->line('Project name defined as '. $this->project);
-    }
     /**
      * @param $value
      * @param $key
@@ -428,6 +391,15 @@ class MountCommand extends MeatCommand
         if ($key == 'DB_NAME' || $key == 'DATABASE_NAME') {
             array_unshift($autocompletes, $this->project);
         }
+        if ($key == 'DB_USER' || $key == 'DB_USERNAME') {
+            array_unshift($autocompletes, config('db_user'));
+        }
+        if ($key == 'DB_PASSWORD') {
+            array_unshift($autocompletes, config('db_pass'));
+        }
+        if ($key == 'DB_HOST') {
+            array_unshift($autocompletes, config('db_host'));
+        }
         if ($key == 'WP_HOME') {
             array_unshift($autocompletes, 'http://' . $this->folder_name . '.dev');
         }
@@ -438,6 +410,9 @@ class MountCommand extends MeatCommand
         return $autocompletes;
     }
 
+    /**
+     * @return $this
+     */
     protected function createDatabaseIfNeeded()
     {
         $dbConfiguration = $this->getDatabaseConfiguration();
@@ -446,7 +421,7 @@ class MountCommand extends MeatCommand
                 $link = @mysqli_connect($dbConfiguration['host'], $dbConfiguration['user'], $dbConfiguration['password']);
                 if ($link === false) {
                     $this->line('<error>Could not establish connection with the database</error>');
-                    return false;
+                    break;
                 }
                 if (!@mysqli_select_db($link, $dbConfiguration['name'])) {
                     if ($this->confirm('The database "' . $dbConfiguration['name'] . '" doesn\'t exists. Do you want to create it? (Y/n): "' )) {
@@ -464,11 +439,19 @@ class MountCommand extends MeatCommand
 
         return $this;
     }
+
+    /**
+     * @return array
+     */
     protected function getDotEnvConfiguration()
     {
         $dotEnv = new Parser(file_get_contents(getcwd() . DIRECTORY_SEPARATOR . '.env'));
         return $dotEnv->getContent();
     }
+
+    /**
+     * @return array
+     */
     protected function getDatabaseConfiguration()
     {
         $dotEnv = $this->getDotEnvConfiguration();
@@ -505,5 +488,34 @@ class MountCommand extends MeatCommand
         }
 
         return $dbConfig;
+    }
+
+    /**
+     * @return $this
+     */
+    protected function notifyProjectInstallation()
+    {
+        $this->api->notifyProjectInstallation($this->project);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    private function openBrowser($url = null)
+    {
+        //@TODO: Add windows implementation
+        if ($this->option('no-browser')) {
+            return $this;
+        }
+
+        if (is_null($url)) {
+            $url = 'http://' . $this->folder_name . '.dev/';
+        }
+
+        $this->info('Opening browser: ' . $url);
+        $this->runProcess('/usr/bin/open \'' . escapeshellarg($url) . '\'');
+
+        return $this;
     }
 }

@@ -12,7 +12,8 @@ require __DIR__ . '/src/helpers.php';
 $app = new Symfony\Component\Console\Application('Meat CLI', '0.1.0');
 $app->add(new Meat\Cli\Console\MountCommand);
 $app->add(new Meat\Cli\Console\InstallCommand);
-$app->add(new Meat\Cli\Console\StartCommand);
+$app->add(new Meat\Cli\Console\CreateCommand);
+$app->add(new Meat\Cli\Console\WhoAmICommand);
 
 
 $app->run();

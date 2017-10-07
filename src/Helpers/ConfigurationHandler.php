@@ -23,7 +23,7 @@ class ConfigurationHandler
         $newConfiguration = $config;
         if ($merge) {
             $currentConfiguration = $this->all();
-            $newConfiguration = array_merge($config, $currentConfiguration);
+            $newConfiguration = array_merge($currentConfiguration, $config);
         }
 
         file_put_contents($this->getConfigurationPath(), json_encode($newConfiguration, JSON_PRETTY_PRINT));

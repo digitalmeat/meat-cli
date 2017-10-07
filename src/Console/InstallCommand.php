@@ -1,11 +1,12 @@
 <?php
 namespace Meat\Cli\Console;
 
+use GuzzleHttp\Exception\ClientException;
 use Meat\Cli\Helpers\MeatAPI;
 
 class InstallCommand extends MeatCommand
 {
-
+    protected $needLogin = false;
     /**
      * Configure the command options.
      *
@@ -62,13 +63,22 @@ class InstallCommand extends MeatCommand
         $this->info('');
         $this->info('Please enter your MEAT credentials');
         $this->info('==========================================');
-        $user = $this->ask('MEAT Email: ');
-        $pass = $this->secret('MEAT Password: ');
 
-        $access_token = (new MeatAPI())->login($user, $pass);
-        var_dump($access_token);
-        if ($access_token) {
-            config(['access_token' => $access_token]);
+        $access_token = null;
+        while(is_null($access_token)) {
+            $user = $this->ask('MEAT Email: ');
+            $pass = $this->secret('MEAT Password: ');
+
+            try {
+                $access_token = (new MeatAPI())->login($user, $pass);
+            } catch (ClientException $exception) {
+                $response = json_decode($exception->getResponse()->getBody()->getContents(), true);
+                $this->line('<error>' . $response['msg'] .'</error>');
+                $access_token = null;
+                continue;
+            }
+
+            config(['access_token' => $access_token['token']]);
         }
     }
 }
