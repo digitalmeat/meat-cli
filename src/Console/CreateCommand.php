@@ -50,16 +50,36 @@ class CreateCommand extends MeatCommand
         $bitbucket = $this->confirm('Create Bitbucket repository?', true);
         if ($bitbucket) {
             $this->info('Setting up bitbucket repository...');
-            $project = $this->api->setupProjectBitbucket($project['id']);
+            try {
+                $project = $this->api->setupProjectBitbucket($project['id']);
+            } catch (\Exception $e) {
+                $this->error('Something went wrong creating the Bitbucket repository...');
+                $bitbucket = false;
+            }
+
+            $this->info('Setting newly created repository as a git remote');
+            $this->setAsNewGitRepository($this->getRemoteUrlByProject($project));
+            $this->info('Repository added to remote origin successfully');
         }
 
         $staging = $bitbucket && $this->confirm('Create staging on Laravel Forge?', true);
         if ($staging) {
             $this->info('Setting up staging...');
-            $project = $this->api->setupProjectForge($project['id'], get_project_assets_compilation_script('production'));
+            try {
+                $project = $this->api->setupProjectForge($project['id'], get_project_assets_compilation_script('production'));
+            } catch (\Exception $e) {
+                $this->error('Something went wrong creating the staging...');
+                $staging = false;
+            }
+
         }
 
-        $trello = $this->confirm('Create Trello Board?', true);
+        $this->printBigMessage('Project created successfully');
+
+        unlink('.env');
+
+        $this->call('mount');
+        /*$trello = $this->confirm('Create Trello Board?', true);
         if ($trello) {
             $this->info('Setting up Trello...');
             $project = $this->api->setupProjectTrello($project['id']);
@@ -69,15 +89,9 @@ class CreateCommand extends MeatCommand
         if ($slack) {
             $this->info('Setting up Slack...');
             $project = $this->api->setupProjectSlack($project['id']);
-        }
+        }*/
 
 
-        if ($bitbucket) {
-            $this->info('Setting newly created repository as a git remote');
-            $this->setAsNewGitRepository($this->getRemoteUrlByProject($project));
-            $this->info('Repository added to remote origin successfully');
-        }
-        
         $this->printBigMessage('Process complete! 🙌');
 
     }
@@ -93,7 +107,7 @@ class CreateCommand extends MeatCommand
         $repos = [
             'themosis'  => 'composer create-project digitalmeat/themosis:dev-master ' . $escapedFolder,
             'laravel'  => 'laravel new ' . $escapedFolder . ' > /dev/null 2>&1 || composer create-project --prefer-dist laravel/laravel ' . $escapedFolder,
-            'blank'  => 'mkdir ' . $escapedFolder,
+            'blank'  => 'mkdir ' . $escapedFolder . ' && cd ' . $escapedFolder . ' && echo "# Readme" > readme.md',
         ];
 
         return $repos[$type];
@@ -141,6 +155,10 @@ class CreateCommand extends MeatCommand
         if (!$this->option('no-commit')) {
             $this->runProcess('git add .');
             $this->runProcess('git commit -m"[GIT] Initial commit"');
+            $this->info('Pushing first commit');
+            $this->runProcess('git push --set-upstream origin master');
+            $this->runProcess('git checkout -b develop');
+            $this->runProcess('git push --set-upstream origin develop');
         }
 
     }
@@ -158,7 +176,7 @@ class CreateCommand extends MeatCommand
      */
     protected function getRemoteUrlByProject($project)
     {
-        return 'git@bitbucket:' . $project['repo_full_name'] . '.git';
+        return 'git@bitbucket.org:' . $project['repo_full_name'] . '.git';
     }
     /**
      * @param $name

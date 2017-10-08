@@ -4,6 +4,7 @@ namespace Meat\Cli;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
+use Meat\Cli\Console\BuildStagingCommand;
 use Meat\Cli\Console\CompileAssetsCommand;
 use Meat\Cli\Console\CreateBitbucketRepositoryCommand;
 use Meat\Cli\Console\CreateCommand;
@@ -28,7 +29,8 @@ class Kernel extends ConsoleKernel
         InstallCommand::class,
         CreateCommand::class,
         WatchAssetsCommand::class,
-        CompileAssetsCommand::class
+        CompileAssetsCommand::class,
+        BuildStagingCommand::class
     ];
 
     /**

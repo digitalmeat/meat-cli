@@ -15,11 +15,19 @@ class GitHelper
         return substr(explode($this->bitbucketUsername(), trim($process->getOutput()))[1], 1, -4);
     }
 
+
+
     /**
      * @return string
      */
     public function bitbucketUsername()
     {
         return 'digitalmeatdev';
+    }
+
+    public function getCurrentBranch()
+    {
+        $currentBranch = (new ProcessRunner())->run('git branch | awk \'/\*/ { print $2; }\'');
+        return $currentBranch->getOutput()[0];
     }
 }

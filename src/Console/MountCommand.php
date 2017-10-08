@@ -61,9 +61,9 @@ class MountCommand extends MeatCommand
         $this->project = $this->argument('project-code') ?? $info['basename'];
         $this->folder_name = $this->argument('folder') ?? $this->project;
         $this->working_path = !$this->argument('folder') && !$this->argument('project-code') ? '.' : $this->folder_name;
-        /*var_dump($this->project);
+        var_dump($this->project);
         var_dump($this->folder_name);
-        var_dump($this->working_path);*/
+        var_dump($this->working_path);
 
         $this->cloneRepositoryOrCheckDirectory()
             ->changeWorkingDirectory($this->working_path)
@@ -255,7 +255,7 @@ class MountCommand extends MeatCommand
     protected function getAutocompletionOptions($value, $key)
     {
         $autocompletes = [$value];
-        if ($key == 'DB_NAME' || $key == 'DATABASE_NAME') {
+        if ($key == 'DB_NAME' || $key == 'DATABASE_NAME' || $key == 'NAME') {
             array_unshift($autocompletes, $this->project);
         }
         if ($key == 'DB_USER' || $key == 'DB_USERNAME') {

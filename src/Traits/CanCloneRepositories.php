@@ -6,6 +6,10 @@ use Meat\Cli\Helpers\GitHelper;
 use Meat\Cli\Helpers\ProcessRunner;
 use Meat\Cli\Helpers\ProjectHelper;
 
+/**
+ * Class CanCloneRepositories
+ * @package Meat\Cli\Traits
+ */
 trait CanCloneRepositories
 {
     /**
@@ -23,11 +27,16 @@ trait CanCloneRepositories
             $this->setProjectNameBasedOnGitRepository();
         } else {
             $this->cloneRepository($this->project, $this->folder_name);
+
+            $this->checkoutCorrectBranch();
         }
 
         return $this;
     }
 
+    /**
+     *
+     */
     protected function setProjectNameBasedOnGitRepository()
     {
 
@@ -54,5 +63,12 @@ trait CanCloneRepositories
     protected function bitbucketUsername()
     {
         return (new GitHelper())->bitbucketUsername();
+    }
+
+    public function checkoutCorrectBranch()
+    {
+        $currentBranch = (new GitHelper())->getCurrentBranch();
+        $branch = $this->ask('Checkout branch', $currentBranch);
+        (new ProcessRunner())->run('git checkout ' . escapeshellarg($branch));
     }
 }

@@ -128,7 +128,7 @@ class MeatAPI
      */
     public function setupProjectBitbucket($project_id, $code = null)
     {
-        return $this->post("projects/{$project_id}/setup/bitbucket", ['code' => $code]);
+        return $this->post("projects/{$project_id}/setup/bitbucket", ['code' => $code])['data'] ?? null;
     }
 
     /**
@@ -138,22 +138,21 @@ class MeatAPI
      */
     public function setupProjectTrello($project_id)
     {
-        return $this->post("projects/{$project_id}/setup/trello");
+        return $this->post("projects/{$project_id}/setup/trello")['data'] ?? null;
     }
 
     /**
      * @param $project_id
-     * @param $options
      * @return mixed
      */
     public function setupProjectSlack($project_id)
     {
-        return $this->post("projects/{$project_id}/setup/slack");
+        return $this->post("projects/{$project_id}/setup/slack")['data'] ?? null;
     }
 
     /**
      * @param $project_id
-     * @param $options
+     * @param string $assets_scripts
      * @return mixed
      */
     public function setupProjectForge($project_id, $assets_scripts = 'npm i && npm run production')
@@ -161,7 +160,7 @@ class MeatAPI
         //@TODO: No enviar el comando de compilación de assets. Lo mejor sería correr el meat mount directamente en el server para asegurarnos de montarlo correctamente
         return $this->post("projects/{$project_id}/setup/forge", [
             'assets_script' => $assets_scripts
-        ]);
+        ])['data'] ?? null;
     }
 
     /**

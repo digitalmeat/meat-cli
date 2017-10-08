@@ -31,14 +31,15 @@ class CompileAssetsCommand extends MeatCommand
     public function handle(ProjectHelper $projectHelper) {
         $folder = $this->argument('folder') ?? getcwd();
 
-        if ($projectHelper->isThisFolderAProject($folder)) {
-            ProjectConfigurationHelper::getInstance()->setPath($folder)->addMeatFileConfiguration();
-            $command = get_project_assets_compilation_script('dev');
-            $this->info('Compiling and watching assets: ' . $command );
-            $this->changeWorkingDirectory($folder);
-            $this->execPrint($command);
-        } else {
+        if (!$projectHelper->isThisFolderAProject($folder)) {
             $this->error('Could not find a project on ' . $folder);
+            return;
         }
+
+        ProjectConfigurationHelper::getInstance()->setPath($folder)->addMeatFileConfiguration();
+        $command = get_project_assets_compilation_script('dev');
+        $this->info('Compiling and watching assets: ' . $command );
+        $this->changeWorkingDirectory($folder);
+        $this->execPrint($command);
     }
 }

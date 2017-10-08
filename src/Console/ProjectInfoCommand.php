@@ -65,7 +65,7 @@ class ProjectInfoCommand extends MeatCommand
 
         $this->info('Project users');
         $users =collect($project['users']['data'])->map(function($user) {
-            return [$user['name'], $user['email'], Carbon::parse($user['created_at'])->diffForHumans()];
+            return [$user['name'], $user['email'], Carbon::parse($user['assigned_at'])->diffForHumans()];
         });
         $this->table(['Name', 'Email', 'When'], $users);
 
