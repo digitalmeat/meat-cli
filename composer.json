@@ -20,6 +20,7 @@
         "symfony/process": "^3.3",
         "m1/env": "^2.1",
         "guzzlehttp/guzzle": "~6.0",
-        "illuminate/support": "^5.5"   
+        "illuminate/support": "^5.5",
+        "laravel/lumen-framework": "^5.5"   
     }
 }

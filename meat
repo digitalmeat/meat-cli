@@ -1,27 +1,20 @@
 #!/usr/bin/env php
 <?php
 
-use GuzzleHttp\Exception\ClientException;
-
-if (file_exists(__DIR__.'/vendor/autoload.php')) {
-    require __DIR__.'/vendor/autoload.php';
-} else {
-    require __DIR__.'/../../autoload.php';
-}
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 require __DIR__ . '/src/helpers.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
 
-$app = new Symfony\Component\Console\Application('Meat CLI', '0.1.0');
+$kernel = $app->make(
+    'Illuminate\Contracts\Console\Kernel'
+);
+exit($kernel->handle(new ArgvInput, new ConsoleOutput));
+
 $app->add(new Meat\Cli\Console\MountCommand);
 $app->add(new Meat\Cli\Console\InstallCommand);
 $app->add(new Meat\Cli\Console\CreateCommand);
 $app->add(new Meat\Cli\Console\WhoAmICommand);
 $app->add(new Meat\Cli\Console\ProjectInfoCommand);
 $app->add(new Meat\Cli\Console\CreateBitbucketRepositoryCommand);
-
-
-try {
-    $app->run();
-} catch (ClientException $exception) {
-    (new \Meat\Cli\Helpers\ExceptionHandler())->handle($exception);
-}

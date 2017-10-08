@@ -7,24 +7,25 @@ class WhoAmICommand extends MeatCommand
 {
 
     /**
-     * Configure the command options.
+     * The name and signature of the console command.
      *
-     * @return void
+     * @var string
      */
-    protected function configure()
-    {
-        $info = pathinfo(getcwd());
-        $this->setName('whoami')
-            ->setDescription('Get my user information from the api');
+    protected $signature = 'whoami';
 
-    }
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Get my user information from the api';
 
     /**
      * Execute the command.
      * @return void
      * @throws \Exception
      */
-    protected function fire() {
+    public function handle() {
         $user = $this->api->me();
         if (!$user) {
             $this->error('I don\'t know who you are. Access token is invalid or it is not set.');

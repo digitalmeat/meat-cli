@@ -4,8 +4,6 @@ namespace Meat\Cli\Console;
 
 use M1\Env\Parser;
 use Meat\Cli\Traits\CanCloneRepositories;
-use RecursiveArrayIterator;
-use RecursiveIteratorIterator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -16,6 +14,27 @@ use Symfony\Component\Console\Input\InputOption;
 class MountCommand extends MeatCommand
 {
     use CanCloneRepositories;
+
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'mount 
+                            {project-code? : Code of the project. When is not provided, the name of the current folder will be used}
+                            {folder? : Folder where we will install the app. When not provided, the name of the project will be used}
+                            {--k|no-images : Prevent envoy from downloading all the images and user files}
+                            {--p|no-npm : Prevent installation of npm dependencies}
+                            {--c|no-compilation : Prevent compilation of assets}
+                            {--s|no-sync : Prevent compilation of assets}
+                            {--b|no-browser : Prevent browser from opening app url}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Clone and install a MEAT project';
 
     /**
      * @var
@@ -31,41 +50,13 @@ class MountCommand extends MeatCommand
     private $working_path;
 
     /**
-     * Configure the command options.
-     *
-     * @return void
-     */
-    protected function configure()
-    {
-        $this->setName('mount')->setDescription('Clone and install a MEAT project')
-            ->addArgument(
-                'project-code',
-                InputArgument::OPTIONAL,
-                'Slug of the project. When is not provided, the name of the current folder is used')
-            ->addArgument(
-                'folder',
-                InputArgument::OPTIONAL,
-                'Folder where we will install the app. When not provided, the name of the project is used')
-            ->addOption(
-                'no-images',
-                'k',
-                InputOption::VALUE_NONE,
-                'Prevent envoy from downloading all the images and user files')
-            ->addOption(
-                'no-browser',
-                'b',
-                InputOption::VALUE_NONE,
-                'Prevent browser from opening app url');
-
-    }
-
-    /**
      * Execute the command.
      * @return void
      * @throws \Exception
      */
-    protected function fire()
+    public function handle()
     {
+        $this->printBigMessage('Mounting project... ');
         $info = pathinfo(getcwd());
         $this->project = $this->argument('project-code') ?? $info['basename'];
         $this->folder_name = $this->argument('folder') ?? $this->project;
@@ -88,7 +79,7 @@ class MountCommand extends MeatCommand
             ->runPostInstallScripts()
             ->openBrowser();
 
-        $this->info('Process complete!');
+        $this->printBigMessage('Process complete! 🎉');
 
 
 
@@ -135,22 +126,17 @@ class MountCommand extends MeatCommand
         if ($shouldConfigureDotEnv === true) {
             $dotEnv = new Parser(file_get_contents(getcwd() . DIRECTORY_SEPARATOR . '.env.example'));
             $dotEnvConfiguration = $dotEnv->getContent();
-            $this->line('');
-            $this->line('=============================');
-            $this->line('Creating .env interactively');
-            $this->line('=============================');
-            $this->line('');
+            $this->printBigMessage('Creating .env interactively');
+            $this->line('You can use "-" character to leave the field empty');
             $newEnv = [];
 
             foreach ($dotEnvConfiguration as $key => $value) {
                 $autocompleteOptions = $this->getAutocompletionOptions($value, $key);
-                if ($this->confirm("{$key} ({$autocompleteOptions[0]}) (Y/n):")) {
-                    $newEnv[$key] = $key . '=' . $autocompleteOptions[0];
-                } else {
-                    $response = $this->ask($key . ' (' . $autocompleteOptions[0] . '): ', $autocompleteOptions[0], $autocompleteOptions);;
-                    $newEnv[$key] = $key . '=' . $response;
+                $response = $this->anticipate("{$key}", $autocompleteOptions, $autocompleteOptions[0] ?? false);
+                if ($response == '-') {
+                    $response = '';
                 }
-
+                $newEnv[$key] = $key . '=' . $response;
             }
 
             file_put_contents(getcwd() . DIRECTORY_SEPARATOR . '.env', implode(PHP_EOL, $newEnv));
@@ -179,7 +165,7 @@ class MountCommand extends MeatCommand
      */
     protected function npmInstall()
     {
-        if (project_config('npm')) {
+        if (!$this->option('no-npm') && project_config('npm')) {
             $this->info('Installing NPM dependencies');
             $this->runProcess('yarn install || npm install');
         }
@@ -192,11 +178,17 @@ class MountCommand extends MeatCommand
      */
     protected function compileAssets()
     {
+        if ($this->option('no-compilation')) {
+            return $this;
+        }
+
         $driver = project_config('assets.driver');
         if ($driver) {
             $command = get_project_assets_compilation_script('dev');
             $this->info('Compiling assets: ' . $command);
-            $this->runProcess($command);
+            if ($command) {
+                $this->runProcess($command);
+            }
         }
 
         return $this;
@@ -207,6 +199,9 @@ class MountCommand extends MeatCommand
      */
     protected function syncDataFromServer()
     {
+        if ($this->option('no-sync')) {
+            return $this;
+        }
         $envoy = project_config('envoy');
         if ($envoy == 'auto') {
             if (file_exists('envoy.blade.php') || file_exists('Envoy.blade.php')) {
@@ -296,7 +291,7 @@ class MountCommand extends MeatCommand
                     break;
                 }
                 if (!@mysqli_select_db($link, $dbConfiguration['name'])) {
-                    if ($this->confirm('The database "' . $dbConfiguration['name'] . '" doesn\'t exists. Do you want to create it? (Y/n): "' )) {
+                    if ($this->confirm('The database "' . $dbConfiguration['name'] . '" doesn\'t exists. Do you want to create it?: "', true)) {
                         $sql = "CREATE DATABASE `" . mysqli_escape_string($link, $dbConfiguration['name']) . '`';
                         if (!mysqli_query($link, $sql)) {
                             $this->line("<error>Error creating database: $sql" . mysqli_error($link) . "</error>");
@@ -390,4 +385,5 @@ class MountCommand extends MeatCommand
 
         return $this;
     }
+
 }

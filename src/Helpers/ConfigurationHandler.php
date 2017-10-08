@@ -6,7 +6,7 @@ class ConfigurationHandler
 {
     public function isInstalled()
     {
-        return $this->configurationFileExists();
+        return $this->configurationFileExists() && $this->get('access_token');
     }
     public function configurationFileExists()
     {

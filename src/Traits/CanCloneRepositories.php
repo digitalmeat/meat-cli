@@ -2,6 +2,10 @@
 
 namespace Meat\Cli\Traits;
 
+use Meat\Cli\Helpers\GitHelper;
+use Meat\Cli\Helpers\ProcessRunner;
+use Meat\Cli\Helpers\ProjectHelper;
+
 trait CanCloneRepositories
 {
     /**
@@ -12,8 +16,8 @@ trait CanCloneRepositories
     protected function cloneRepositoryOrCheckDirectory()
     {
         if (file_exists($this->working_path)) {
-            $this->line("The folder $this->working_path already exists...");
-            if (!file_exists($this->working_path . DIRECTORY_SEPARATOR . '.git')) {
+            $this->warn("The folder $this->working_path already exists. Skipping git clone...");
+            if (!(new ProjectHelper())->isThisFolderAProject($this->working_path)) {
                 throw new \Exception('Folder already exists and could not find a project');
             }
             $this->setProjectNameBasedOnGitRepository();
@@ -26,11 +30,8 @@ trait CanCloneRepositories
 
     protected function setProjectNameBasedOnGitRepository()
     {
-        $olddir = getcwd();
-        chdir($this->working_path);
-        $process = $this->runProcess('git remote get-url origin', false);
-        chdir($olddir);
-        $this->project = substr(explode($this->bitbucketUsername(), trim($process->getOutput()))[1], 1, -4);
+
+        $this->project = (new GitHelper())->getRespositoryName($this->working_path);
         $this->line('Project name defined as '. $this->project);
     }
 
@@ -52,6 +53,6 @@ trait CanCloneRepositories
      */
     protected function bitbucketUsername()
     {
-        return 'digitalmeatdev';
+        return (new GitHelper())->bitbucketUsername();
     }
 }

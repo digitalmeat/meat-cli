@@ -17,6 +17,11 @@ class ProjectConfigurationHelper
     protected $config = [];
 
     /**
+     * @var string
+     */
+    protected $path;
+
+    /**
      * @var self
      */
     private static $instance;
@@ -37,10 +42,38 @@ class ProjectConfigurationHelper
      * ProjectConfigurationHelper constructor.
      */
     protected function __construct() {
+        $this->path = getcwd();
         $this->addConfig($this->getDefaultConfiguration());
         $this->addMeatFileConfiguration();
     }
+
+    /**
+     * @return string
+     */
+    public function getPath()
+    {
+        return $this->path;
+    }
+
+    /**
+     * @param string $path
+     * @return $this
+     */
+    public function setPath($path)
+    {
+        $this->path = $path;
+
+        return $this;
+    }
+
+    /**
+     *
+     */
     private function __clone() {}
+
+    /**
+     *
+     */
     private function __wakeup() {}
 
     /**
@@ -132,15 +165,15 @@ class ProjectConfigurationHelper
     public function projectHasAMeatFile($folder = null)
     {
         $folder = $folder ?? getcwd() . DIRECTORY_SEPARATOR;
-        return file_exists($folder . $this->meatFilename());
+        return file_exists($folder . $this->meatFilePath());
     }
 
     /**
      * @return string
      */
-    protected function meatFilename()
+    public function meatFilePath()
     {
-        return 'meat.json';
+        return $this->getPath() . '/meat.json';
     }
 
 
@@ -149,14 +182,13 @@ class ProjectConfigurationHelper
      */
     protected function getMeatFileConfiguration()
     {
-
-        return json_decode(file_get_contents($this->meatFilename()), true);
+        return json_decode(file_get_contents($this->meatFilePath()), true);
     }
 
     /**
      * @return bool
      */
-    protected function addMeatFileConfiguration()
+    public function addMeatFileConfiguration()
     {
         if (!$this->projectHasAMeatFile()) {
             return false;

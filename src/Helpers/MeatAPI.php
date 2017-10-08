@@ -12,20 +12,15 @@ use GuzzleHttp\Exception\ClientException;
 class MeatAPI
 {
     /**
+     * @var
+     */
+    protected $client;
+    /**
      * MeatAPI constructor.
      */
     public function __construct()
     {
-        $this->client = new Client([
-            'base_uri' => config('api_url', 'https://api.meat.cl/'),
-            // You can set any number of default request options.
-            'timeout'  => 30.0,
-            'headers' => [
-                'Authorization' => 'Bearer ' . config('access_token', ''),
-                'Accept'     => 'application/json',
-            ],
-        ]);
-
+        $this->setClient();
     }
 
     /**
@@ -37,6 +32,9 @@ class MeatAPI
     {
         $response = $this->client->get($uri, [
             'query' => $data,
+            'headers' => [
+                'Authorization' => 'Bearer ' . config('access_token', '')
+            ]
         ]);
 
         return  json_decode($response->getBody()->getContents(), true);
@@ -50,7 +48,10 @@ class MeatAPI
     public function post($uri, $data = [])
     {
         $response = $this->client->post($uri, [
-            'form_params' => $data
+            'form_params' => $data,
+            'headers' => [
+                'Authorization' => 'Bearer ' . config('access_token', '')
+            ]
         ]);
         $content = $response->getBody()->getContents();
         return json_decode($content, true);
@@ -63,7 +64,6 @@ class MeatAPI
      */
     public function login($user, $pass)
     {
-
         return $this->post('meat-cli/authorize', [
             'email' => $user,
             'password' => $pass,
@@ -104,7 +104,7 @@ class MeatAPI
      */
     public function getProject($project)
     {
-        return $this->get('projects/' . $project);
+        return $this->get('projects/' . $project)['data'] ?? null;
     }
 
     /**
@@ -164,10 +164,29 @@ class MeatAPI
         ]);
     }
 
+    /**
+     * @param $code
+     * @return mixed
+     */
     public function createRepository($code)
     {
         return $this->post('create-repository', [
             'code' => $code
+        ]);
+    }
+
+    /**
+     *
+     */
+    public function setClient()
+    {
+        $this->client = new Client([
+            'base_uri' => config('api_url', 'https://api.meat.cl/api/'),
+            // You can set any number of default request options.
+            'timeout'  => 30.0,
+            'headers' => [
+                'Accept'     => 'application/json',
+            ],
         ]);
     }
 

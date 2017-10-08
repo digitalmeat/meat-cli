@@ -14,40 +14,32 @@ use Symfony\Component\Console\Input\InputOption;
 class CreateCommand extends MeatCommand
 {
     /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'create 
+                            {--c|no-commit : Do not run the first commit. Just add the remote origin}
+                            {--y|yes : Automatically reply yes to every answer}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Create a new project based on a predefined template';
+
+    /**
      * @var
      */
     protected $folder;
 
-    /**
-     * Configure the command options.
-     *
-     * @return void
-     */
-    protected function configure()
-    {
-
-        $info = pathinfo(getcwd());
-        $this->setName('create')
-            ->setDescription('Create a new project based on a predefined template')
-            ->addOption(
-                'no-commit',
-                'c',
-                InputOption::VALUE_NONE,
-                'Do not run the first commit. Just add the remote origin')
-            ->addOption(
-                'yes',
-                'y',
-                InputOption::VALUE_NONE,
-                'Automatically reply yes to every answer');
-
-    }
 
     /**
      *
      */
-    public function fire()
+    public function handle()
     {
-
         list($type, $name) = $this->askTypeAndName();
         $project = $this->askCodeAndCreateProject($name, $type);
         $folder = $this->askForInstallationDirectory($project);
@@ -55,31 +47,29 @@ class CreateCommand extends MeatCommand
         $this->installBaseScaffolding($type)
             ->changeWorkingDirectory($folder);
 
-        $bitbucket = $this->confirm('Create Bitbucket repository? (Y/n): ');
+        $bitbucket = $this->confirm('Create Bitbucket repository?', true);
         if ($bitbucket) {
             $this->info('Setting up bitbucket repository...');
             $project = $this->api->setupProjectBitbucket($project['id']);
         }
 
-        $staging = $bitbucket && $this->confirm('Create staging on Laravel Forge? (Y/n): ');
+        $staging = $bitbucket && $this->confirm('Create staging on Laravel Forge?', true);
         if ($staging) {
             $this->info('Setting up staging...');
             $project = $this->api->setupProjectForge($project['id'], get_project_assets_compilation_script('production'));
         }
 
-        $trello = $this->confirm('Create Trello Board? (Y/n): ');
+        $trello = $this->confirm('Create Trello Board?', true);
         if ($trello) {
             $this->info('Setting up Trello...');
             $project = $this->api->setupProjectTrello($project['id']);
         }
 
-        $slack = $this->confirm('Create Slack Channel? (Y/n): ');
+        $slack = $this->confirm('Create Slack Channel?', true);
         if ($slack) {
             $this->info('Setting up Slack...');
             $project = $this->api->setupProjectSlack($project['id']);
         }
-
-
 
 
         if ($bitbucket) {
@@ -88,11 +78,7 @@ class CreateCommand extends MeatCommand
             $this->info('Repository added to remote origin successfully');
         }
         
-        $this->line('');
-        $this->line('=============================');
-        $this->line('Process complete!');
-        $this->line('=============================');
-        $this->line('');
+        $this->printBigMessage('Process complete! 🙌');
 
     }
 
@@ -135,7 +121,6 @@ class CreateCommand extends MeatCommand
      * @return mixed
      */
     public function createProjectOnMeatApi($project_name, $project_code, $project_type) {
-        $this->line('Creating project on MEAT Cloud...');
         $project = $this->api->createProject($project_code, $project_name, $project_type);
         $this->info('Project created successfully!');
         return $project;
@@ -185,7 +170,7 @@ class CreateCommand extends MeatCommand
         $code = str_slug($name);
         $project = false;
         while (true) {
-            $code = $this->ask("Project code ($code): ", $code, null, true);
+            $code = $this->ask("Project code", $code);
 
             try {
                 $project = $this->createProjectOnMeatApi($name, $code, $type);
@@ -209,7 +194,7 @@ class CreateCommand extends MeatCommand
         ], 'blank');
 
         $this->info($type . ' selected');
-        $name = $this->ask('Project name: ', null, null, true);
+        $name = $this->ask('Project name', null, null, true);
 
         return array($type, $name);
     }
@@ -219,9 +204,9 @@ class CreateCommand extends MeatCommand
      */
     protected function askForInstallationDirectory($project)
     {
-        $folder = getcwd() . DIRECTORY_SEPARATOR . $project->code;
+        $folder = getcwd() . DIRECTORY_SEPARATOR . $project['code'];
         while (true) {
-            $folder = $this->ask("Installation folder ($folder): ", $folder);
+            $folder = $this->ask("Installation folder", $folder);
             if (!file_exists($folder)) {
                 break;
             }

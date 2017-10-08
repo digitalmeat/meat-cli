@@ -43,7 +43,7 @@ trait Command
         $this->output = $output;
 
         if ($this->needLogin) {
-            if (!(new ConfigurationHandler())->isInstalled() || !config('access_token')) {
+            if (!(new ConfigurationHandler())->isInstalled()) {
                 $this->error('You have not installed meat-cli. Please run "meat init" ');
                 return;
             }
@@ -203,40 +203,6 @@ trait Command
         return $this->line('<error>' . $line . '</error>');
     }
 
-    /**
-     * @param $command
-     * @param bool $print_output
-     * @param null $timeout
-     * @return int|Process
-     */
-    public function runProcess($command, $print_output = true, $timeout = null)
-    {
-        if ($print_output == null) {
-            $print_output = $this->option('verbose');
-        }
-        $process = new Process($command);
-        $process->setTimeout($timeout);
-        if ($print_output) {
-            return $process->run(function ($type, $buffer) {
-                $this->output->write($buffer);
-            });
-        }
-        $process->run();
-        return $process;
-    }
 
-    /**
-     * @param $command
-     * @return null
-     */
-    function execPrint($command) {
-        $result = array();
-        $return_status = null;
-        exec($command, $result, $return_status);
-        foreach ($result as $line) {
-            print($line . "\n");
-        }
 
-        return $return_status;
-    }
 }

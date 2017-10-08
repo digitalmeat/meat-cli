@@ -3,43 +3,46 @@
 namespace Meat\Cli\Console;
 
 
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 
 class CreateBitbucketRepositoryCommand extends MeatCommand
 {
-
     /**
-     * Configure the command options.
+     * The name and signature of the console command.
      *
-     * @return void
+     * @var string
      */
-    protected function configure()
-    {
-        $info = pathinfo(getcwd());
-        $this->setName('create-repo')
-            ->setDescription('Create a Bitbucket repository')
-            ->addArgument(
-                'code',
-                InputArgument::REQUIRED,
-                'Repository name');
-
-    }
+    protected $signature = 'create-repo {code : Repository name}';
 
     /**
-     * Execute the command.
-     * @return void
-     * @throws \Exception
+     * The console command description.
+     *
+     * @var string
      */
-    protected function fire() {
+    protected $description = 'Create a Bitbucket repository';
+
+
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
+    public function handle()
+    {
         $name = str_slug($this->argument('code'));
         $this->info('Creating repository... ');
         $repo = $this->api->createRepository($name);
+        $this->info('Repository created successfully!');
 
-        var_dump($repo);
-        $this->info('');
-        $this->info('ID: ' . $user['id']);
-        $this->info('Nombre: ' . $user['name']);
-        $this->info('Email: ' . $user['email']);
-        $this->info('');
+        $this->table([], [
+            ['Nombre: ', $repo['name']],
+            ['URL: ', $repo['links']['html']['href']],
+            ['Clone HTTPS: ', $repo['links']['clone'][0]['href']],
+            ['Clone SSH: ', $repo['links']['clone'][1]['href']],
+        ]);
+
     }
+
+
 }

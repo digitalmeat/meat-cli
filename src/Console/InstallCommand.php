@@ -4,29 +4,44 @@ namespace Meat\Cli\Console;
 use GuzzleHttp\Exception\ClientException;
 use Meat\Cli\Helpers\MeatAPI;
 
+/**
+ * Class InstallCommand
+ * @package Meat\Cli\Console
+ */
 class InstallCommand extends MeatCommand
 {
+    /**
+     * @var bool
+     */
     protected $needLogin = false;
     /**
-     * Configure the command options.
+     * The name and signature of the console command.
      *
-     * @return void
+     * @var string
      */
-    protected function configure()
-    {
-        $this->setName('init')->setDescription('');
-    }
+    protected $signature = 'init';
 
-    protected function fire() {
-        $this->line('');
-        $this->info('==========================================');
-        $this->info('MEAT CLI Installation');
-        $this->info('==========================================');
-        $this->line('');
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'This is the installation process. Create your personal .meat file once so you can easily run your commands afterwards';
+
+    /**
+     * @var array
+     */
+    protected $configuration = [];
+
+    /**
+     *
+     */
+    public function handle() {
+        $this->printBigMessage('MEAT CLI Installation ✌️');
 
 
         if ($this->configurationHandler->isInstalled()) {
-            if (!$this->confirm('Ya existe un archivo ~/.meat. ¿Desea actualizarlo? (Y/n)')) {
+            if (!$this->confirm('MEAT Cli is already installed. Do you want to update your ~/.meat file?')) {
                 return;
             }
         }
@@ -36,6 +51,9 @@ class InstallCommand extends MeatCommand
 
     }
 
+    /**
+     *
+     */
     public function askDatabaseInformation()
     {
         $this->info('');
@@ -43,14 +61,17 @@ class InstallCommand extends MeatCommand
         $this->info('==========================================');
 
         $configuration = [
-            'db_user' => $this->ask('Database User (root): ', 'root'),
-            'db_pass' => $this->secret('Database Password (--empty--): '),
-            'db_host' => $this->ask('Database Host (localhost): ', 'localhost'),
+            'db_user' => $this->ask('Database User', 'root'),
+            'db_pass' => $this->secretAllowEmpty('Database Password'),
+            'db_host' => $this->ask('Database Host', 'localhost'),
         ];
 
         $this->configurationHandler->save($configuration);
     }
 
+    /**
+     *
+     */
     private function finishMessage()
     {
         $this->info('');
@@ -58,6 +79,10 @@ class InstallCommand extends MeatCommand
         $this->info('Installation complete!');
         $this->info('==========================================');
     }
+
+    /**
+     * Promt user for meat cloud credentials
+     */
     private function askMeatCredentials()
     {
         $this->info('');
@@ -70,7 +95,7 @@ class InstallCommand extends MeatCommand
             $pass = $this->secret('MEAT Password: ');
 
             try {
-                $access_token = (new MeatAPI())->login($user, $pass);
+                $access_token = $this->api->login($user, $pass);
             } catch (ClientException $exception) {
                 $response = json_decode($exception->getResponse()->getBody()->getContents(), true);
                 $this->line('<error>' . $response['msg'] .'</error>');
