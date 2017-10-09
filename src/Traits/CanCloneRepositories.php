@@ -27,6 +27,8 @@ trait CanCloneRepositories
             $this->setProjectNameBasedOnGitRepository();
         } else {
             $this->cloneRepository($this->project, $this->folder_name);
+            $this->working_path = realpath($this->working_path);
+            chdir($this->working_path);
 
             $this->checkoutCorrectBranch();
         }

@@ -27,7 +27,7 @@ class GitHelper
 
     public function getCurrentBranch()
     {
-        $currentBranch = (new ProcessRunner())->run('git branch | awk \'/\*/ { print $2; }\'');
-        return $currentBranch->getOutput()[0];
+        $currentBranch = (new ProcessRunner())->run('git branch | awk \'/\*/ { print $2; }\'', false);
+        return trim($currentBranch->getOutput());
     }
 }

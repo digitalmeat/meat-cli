@@ -61,8 +61,8 @@ class MountCommand extends MeatCommand
         $this->project = $this->argument('project-code') ?? $info['basename'];
         $this->folder_name = $this->argument('folder') ?? $this->project;
         $this->working_path = !$this->argument('folder') && !$this->argument('project-code') ? '.' : $this->folder_name;
-        var_dump($this->project);
-        var_dump($this->folder_name);
+        /*var_dump($this->project);
+        var_dump($this->folder_name);*/
         var_dump($this->working_path);
 
         $this->cloneRepositoryOrCheckDirectory()
@@ -151,7 +151,8 @@ class MountCommand extends MeatCommand
     {
         if (!$this->option('no-npm') && project_config('npm')) {
             $this->info('Installing NPM dependencies');
-            $this->runProcess('yarn install || npm install');
+            //$this->runProcess('yarn install || npm install');
+            passthru('yarn install || npm install');
         }
 
         return $this;
@@ -210,10 +211,9 @@ class MountCommand extends MeatCommand
      */
     protected function runMigrationsIfLaravel()
     {
-        if (project_config('migrate') || (project_config('migrate') == 'auto' && $this->isLaravel())) {
+        if (project_config('artisan_migrate') || (project_config('artisan_migrate') == 'auto' && $this->isLaravel())) {
             $this->info('Running Laravel Migrations...');
-            $this->runProcess('envoy run sync_database');
-            $this->runProcess('envoy run pull_images');
+            $this->runProcess('php artisan migrate');
         }
 
         return $this;
@@ -239,7 +239,7 @@ class MountCommand extends MeatCommand
     protected function getAutocompletionOptions($value, $key)
     {
         $autocompletes = [$value];
-        if ($key == 'DB_NAME' || $key == 'DATABASE_NAME' || $key == 'NAME') {
+        if ($key == 'DB_NAME' || $key == 'DATABASE_NAME' || $key == 'DB_DATABASE' || $key == 'NAME') {
             array_unshift($autocompletes, $this->project);
         }
         if ($key == 'DB_USER' || $key == 'DB_USERNAME') {
@@ -251,7 +251,7 @@ class MountCommand extends MeatCommand
         if ($key == 'DB_HOST') {
             array_unshift($autocompletes, config('db_host'));
         }
-        if ($key == 'WP_HOME') {
+        if ($key == 'WP_HOME' || $key == 'APP_URL') {
             array_unshift($autocompletes, 'http://' . $this->folder_name . '.dev');
         }
         if ($key == 'WP_SITEURL') {
@@ -318,7 +318,7 @@ class MountCommand extends MeatCommand
             if(strpos($key, 'DB') === false && strpos($key, 'DATABASE') === false) {
                 continue;
             }
-            if(strpos($key, 'NAME') !== false) {
+            if($key == 'DB_NAME' || $key == 'DB_DATABASE') {
                 $dbConfig['name'] = $value;
             }
             if(strpos($key, 'HOST') !== false) {
