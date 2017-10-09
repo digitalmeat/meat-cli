@@ -62,8 +62,8 @@ class MountCommand extends MeatCommand
         $this->folder_name = $this->argument('folder') ?? $this->project;
         $this->working_path = !$this->argument('folder') && !$this->argument('project-code') ? '.' : $this->folder_name;
         /*var_dump($this->project);
-        var_dump($this->folder_name);*/
-        var_dump($this->working_path);
+        var_dump($this->folder_name);
+        var_dump($this->working_path);*/
 
         $this->cloneRepositoryOrCheckDirectory()
             ->changeWorkingDirectory($this->working_path)
@@ -75,7 +75,7 @@ class MountCommand extends MeatCommand
             ->npmInstall()
             ->compileAssets()
             ->syncDataFromServer()
-            ->runMigrationsIfLaravel()
+            ->runAutomaticPostInstallScripts()
             ->runPostInstallScripts()
             ->openBrowser();
 
@@ -209,11 +209,20 @@ class MountCommand extends MeatCommand
     /**
      * @return $this
      */
-    protected function runMigrationsIfLaravel()
+    protected function runAutomaticPostInstallScripts()
     {
-        if (project_config('artisan_migrate') || (project_config('artisan_migrate') == 'auto' && $this->isLaravel())) {
-            $this->info('Running Laravel Migrations...');
-            $this->runProcess('php artisan migrate');
+        if ($this->isLaravel()) {
+            if (project_config('artisan_migrate') || (project_config('artisan_migrate') == 'auto')) {
+                $this->info('Running Laravel Migrations...');
+                $this->runProcess('php artisan migrate');
+            }
+
+            $configuration = $this->getDotEnvConfiguration();
+            if (!$configuration['APP_KEY']) {
+                $this->info('APP_KEY is empty. Running key:genrate');
+                $this->runProcess('php artisan key:generate');
+            }
+
         }
 
         return $this;
@@ -267,6 +276,7 @@ class MountCommand extends MeatCommand
     protected function createDatabaseIfNeeded()
     {
         $dbConfiguration = $this->getDatabaseConfiguration();
+
         switch($dbConfiguration['type']) {
             case 'mysql':
                 $link = @mysqli_connect($dbConfiguration['host'], $dbConfiguration['user'], $dbConfiguration['password']);
@@ -325,7 +335,7 @@ class MountCommand extends MeatCommand
                 $dbConfig['host'] = $value;
             }
 
-            if(strpos($key, 'USER') !== false) {
+            if($key == 'DB_USERNAME' || $key == 'DB_USER') {
                 $dbConfig['user'] = $value;
             }
 
