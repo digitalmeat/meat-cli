@@ -184,7 +184,7 @@ class MeatCommand extends Command
      */
     protected function getProjectCode()
     {
-        $project_code = $this->argument('project-code');
+        $project_code = $this->hasArgument('project-code') ? $this->argument('project-code') : false;
         if (!$project_code) {
             $folder = getcwd();
             if (!(new ProjectHelper())->isThisFolderAProjectRepository($folder)) {

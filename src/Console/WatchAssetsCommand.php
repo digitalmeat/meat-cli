@@ -31,14 +31,15 @@ class WatchAssetsCommand extends MeatCommand
     public function handle(ProjectHelper $projectHelper) {
         $folder = $this->argument('folder') ?? getcwd();
 
-        if ($projectHelper->isThisFolderAProjectRepository($folder)) {
-            ProjectConfigurationHelper::getInstance()->setPath($folder)->addMeatFileConfiguration();
-            $command = get_project_assets_compilation_script('watch');
-            $this->info('Compiling and watching assets: ' . $command );
-            $this->changeWorkingDirectory($folder);
-            $this->execPrint($command);
-        } else {
+        if (!$projectHelper->isThisFolderAProjectRepository($folder)) {
             $this->error('Could not find a project on ' . $folder);
+            exit(1);
         }
+        ProjectConfigurationHelper::getInstance()->setPath($folder)->addMeatFileConfiguration();
+        $command = get_project_assets_compilation_script('watch');
+        $this->info('Compiling and watching assets: ' . $command );
+        $this->changeWorkingDirectory($folder);
+        passthru($command);
+
     }
 }

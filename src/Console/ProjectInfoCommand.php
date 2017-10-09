@@ -31,25 +31,8 @@ class ProjectInfoCommand extends MeatCommand
      * @throws \Exception
      */
     public function handle() {
-        $code = $this->argument('project-code');
-        if (!$code) {
-            $code = (new GitHelper())->getRespositoryName();
-        }
-        $project = false;
-        try {
-            $project = $this->api->getProject($code);
-        } catch (ClientException $exception) {
-            if ($exception->getCode() == 404) {
-                $this->error('Project "' . $code . '" does not exists');
-                return;
-            }
-        }
+        $project = $this->getProject();
 
-        if (!$project) {
-            $this->error('I don\'t know who you are. Access token is invalid or it is not set.');
-            $this->info('You can refresh the access token running  "meat init" command ');
-            return;
-        }
         $this->table([],[
             ['Name: ', $project['name']],
             ['Code: ', $project['code']],

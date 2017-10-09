@@ -40,6 +40,6 @@ class CompileAssetsCommand extends MeatCommand
         $command = get_project_assets_compilation_script('dev');
         $this->info('Compiling and watching assets: ' . $command );
         $this->changeWorkingDirectory($folder);
-        $this->execPrint($command);
+        passthru($command);
     }
 }

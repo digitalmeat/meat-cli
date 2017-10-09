@@ -13,6 +13,7 @@ use Meat\Cli\Console\FindStagingCommand;
 use Meat\Cli\Console\InstallCommand;
 use Meat\Cli\Console\MountCommand;
 use Meat\Cli\Console\ProjectInfoCommand;
+use Meat\Cli\Console\SSHCommand;
 use Meat\Cli\Console\WatchAssetsCommand;
 use Meat\Cli\Console\WhoAmICommand;
 
@@ -34,7 +35,8 @@ class Kernel extends ConsoleKernel
         CompileAssetsCommand::class,
         BuildStagingCommand::class,
         DeployNowCommand::class,
-        FindStagingCommand::class
+        FindStagingCommand::class,
+        SSHCommand::class
     ];
 
     /**

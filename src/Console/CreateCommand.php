@@ -42,6 +42,7 @@ class CreateCommand extends MeatCommand
     public function handle(ProjectHelper $projectHelper)
     {
         if($projectHelper->isThisFolderAProjectRepository(getcwd())) {
+            //You cant create a project inside a projects, so lets create this project on MEAT
             $this->createNewProjectFromThisRepository();
             return;
         } else {

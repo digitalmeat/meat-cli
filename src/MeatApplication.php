@@ -20,7 +20,7 @@ class MeatApplication extends Application {
 
         $this->configure('database');
 
-        $this->register('Illuminate\Database\MigrationServiceProvider');
+        //$this->register('Illuminate\Database\MigrationServiceProvider');
         //$this->register('Laravel\Lumen\Console\ConsoleServiceProvider');
     }
 }
