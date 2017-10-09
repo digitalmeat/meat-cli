@@ -33,8 +33,8 @@ class FindStagingCommand extends MeatCommand
             return;
         }
 
-        if ($project['forge_site_id']) {
-            $this->error('This project already has a forge_site_id');
+        if ($project['forge_staging_site_id']) {
+            $this->error('This project already has a forge_staging_site_id');
             return;
         }
 

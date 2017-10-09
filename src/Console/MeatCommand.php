@@ -48,6 +48,41 @@ class MeatCommand extends Command
         $this->processRunner = $processRunner;
 
     }
+    /**
+     * @return bool
+     */
+    public function isThemosis()
+    {
+        return file_exists('library/Thms/Config/Environment.php');
+    }
+    /**
+     * @return bool
+     */
+    public function isLaravel()
+    {
+        return file_exists('artisan');
+    }
+
+    /**
+     * @param null $folder
+     * @return string
+     */
+    public function getProjectType($folder = null)
+    {
+        $oldDir = getcwd();
+        $folder = $folder ?? getcwd();
+        chdir($folder);
+        $response = 'other';
+        if ($this->isLaravel()) {
+            $response = 'laravel';
+        }
+        if ($this->isThemosis()) {
+            $response = 'themosis';
+        }
+        chdir($oldDir);
+
+        return $response;
+    }
 
     /**
      * Execute the console command.
@@ -152,7 +187,7 @@ class MeatCommand extends Command
         $project_code = $this->argument('project-code');
         if (!$project_code) {
             $folder = getcwd();
-            if (!(new ProjectHelper())->isThisFolderAProject($folder)) {
+            if (!(new ProjectHelper())->isThisFolderAProjectRepository($folder)) {
                 throw new \Exception('Could not find a project on ' . $folder);
             }
             $project_code = (new GitHelper())->getRespositoryName($folder);
@@ -163,16 +198,16 @@ class MeatCommand extends Command
     /**
      * @return mixed|null
      */
-    protected function getProject()
+    protected function getProject($project_code = null)
     {
-        $project_code = $this->getProjectCode();
+        $project_code = $project_code ? : $this->getProjectCode();
 
         $project = null;
         try {
             $project = $this->api->getProject($project_code);
         } catch (\Exception $e) {
             if ($e->getCode() == 404) {
-                $this->error('The project "' . $project_code . '" is not created on MEAT Cloud... ');
+                $this->warn('The project "' . $project_code . '" is not created on MEAT Cloud... ');
             }
         }
 

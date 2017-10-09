@@ -15,8 +15,9 @@ class ProjectHelper
      * @param $path
      * @return bool
      */
-    public function isThisFolderAProject($path)
+    public function isThisFolderAProjectRepository($path)
     {
+        //@TODO: Change this to GitHelper
         return file_exists($path . DIRECTORY_SEPARATOR . '.git');
     }
 }

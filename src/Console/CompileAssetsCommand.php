@@ -31,7 +31,7 @@ class CompileAssetsCommand extends MeatCommand
     public function handle(ProjectHelper $projectHelper) {
         $folder = $this->argument('folder') ?? getcwd();
 
-        if (!$projectHelper->isThisFolderAProject($folder)) {
+        if (!$projectHelper->isThisFolderAProjectRepository($folder)) {
             $this->error('Could not find a project on ' . $folder);
             return;
         }

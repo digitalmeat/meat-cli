@@ -39,7 +39,7 @@ class DeployNowCommand extends MeatCommand
             return;
         }
 
-        if (!$project['forge_site_id']) {
+        if (!$project['forge_staging_site_id']) {
             $this->call('find-staging');
         }
 

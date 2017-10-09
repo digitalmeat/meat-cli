@@ -155,11 +155,12 @@ class MeatAPI
      * @param string $assets_scripts
      * @return mixed
      */
-    public function setupProjectForge($project_id, $assets_scripts = 'npm i && npm run production')
+    public function setupProjectStaging($project_id, $assets_scripts = 'npm i && npm run production', $domain = null)
     {
         //@TODO: No enviar el comando de compilación de assets. Lo mejor sería correr el meat mount directamente en el server para asegurarnos de montarlo correctamente
         return $this->post("projects/{$project_id}/setup/forge", [
-            'assets_script' => $assets_scripts
+                'assets_script' => $assets_scripts,
+                'domain' => $domain
         ])['data'] ?? null;
     }
 

@@ -31,7 +31,7 @@ class WatchAssetsCommand extends MeatCommand
     public function handle(ProjectHelper $projectHelper) {
         $folder = $this->argument('folder') ?? getcwd();
 
-        if ($projectHelper->isThisFolderAProject($folder)) {
+        if ($projectHelper->isThisFolderAProjectRepository($folder)) {
             ProjectConfigurationHelper::getInstance()->setPath($folder)->addMeatFileConfiguration();
             $command = get_project_assets_compilation_script('watch');
             $this->info('Compiling and watching assets: ' . $command );

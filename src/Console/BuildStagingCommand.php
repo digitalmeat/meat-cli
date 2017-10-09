@@ -16,7 +16,8 @@ class BuildStagingCommand extends MeatCommand
      * @var string
      */
     protected $signature = 'build-staging 
-                            {project-code? : Code of the project. When is not provided, the name of the current folder will be used}';
+                            {project-code? : Code of the project. When is not provided, the name of the current folder will be used}
+                            {--d|domain= : Domain name. If not provided, it will be automatically asociated';
 
     /**
      * The console command description.
@@ -36,7 +37,8 @@ class BuildStagingCommand extends MeatCommand
 
         $project_code = $this->getProjectCode();
 
-        $this->api->setupProjectForge($project_code, get_project_assets_compilation_script('production'));
+        $response = $this->api->setupProjectStaging($project_code, get_project_assets_compilation_script('production'));
+        var_dump($response);
 
     }
 

@@ -86,22 +86,6 @@ class MountCommand extends MeatCommand
     }
 
     /**
-     * @return bool
-     */
-    public function isThemosis()
-    {
-        return file_exists('library/Thms/Config/Environment.php');
-    }
-
-    /**
-     * @return bool
-     */
-    public function isLaravel()
-    {
-        return file_exists('artisan');
-    }
-
-    /**
      * @return $this
      */
     protected function runPreInstallScripts()

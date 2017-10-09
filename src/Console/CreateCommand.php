@@ -3,6 +3,8 @@
 namespace Meat\Cli\Console;
 
 use GuzzleHttp\Exception\ClientException;
+use Meat\Cli\Helpers\GitHelper;
+use Meat\Cli\Helpers\ProjectHelper;
 use Meat\Cli\Traits\CanCloneRepositories;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
@@ -18,7 +20,7 @@ class CreateCommand extends MeatCommand
      *
      * @var string
      */
-    protected $signature = 'create 
+    protected $signature = 'create-project
                             {--c|no-commit : Do not run the first commit. Just add the remote origin}
                             {--y|yes : Automatically reply yes to every answer}';
 
@@ -34,18 +36,17 @@ class CreateCommand extends MeatCommand
      */
     protected $folder;
 
-
     /**
-     *
+     * @param ProjectHelper $projectHelper
      */
-    public function handle()
+    public function handle(ProjectHelper $projectHelper)
     {
-        list($type, $name) = $this->askTypeAndName();
-        $project = $this->askCodeAndCreateProject($name, $type);
-        $folder = $this->askForInstallationDirectory($project);
-
-        $this->installBaseScaffolding($type)
-            ->changeWorkingDirectory($folder);
+        if($projectHelper->isThisFolderAProjectRepository(getcwd())) {
+            $this->createNewProjectFromThisRepository();
+            return;
+        } else {
+            $project = $this->createNewProjectFromBase();
+        }
 
         $bitbucket = $this->confirm('Create Bitbucket repository?', true);
         if ($bitbucket) {
@@ -66,7 +67,7 @@ class CreateCommand extends MeatCommand
         if ($staging) {
             $this->info('Setting up staging...');
             try {
-                $project = $this->api->setupProjectForge($project['id'], get_project_assets_compilation_script('production'));
+                $project = $this->api->setupProjectStaging($project['id'], get_project_assets_compilation_script('production'));
             } catch (\Exception $e) {
                 $this->error('Something went wrong creating the staging...');
                 $staging = false;
@@ -234,6 +235,39 @@ class CreateCommand extends MeatCommand
         $this->folder = $folder;
 
         return $folder;
+    }
+    /**
+     * @return mixed
+     */
+    protected function createNewProjectFromBase()
+    {
+        list($type, $name) = $this->askTypeAndName();
+        $project = $this->askCodeAndCreateProject($name, $type);
+        $folder = $this->askForInstallationDirectory($project);
+
+        $this->installBaseScaffolding($type);
+        $this->changeWorkingDirectory($folder);
+
+        return $project;
+    }
+    /**
+     * @return mixed|bool
+     */
+    protected function createNewProjectFromThisRepository()
+    {
+        $project_code = (new GitHelper())->getRespositoryName();
+        $project = $this->getProject($project_code);
+        if ($project) {
+            $this->error('This repository is already connected to a Meat project. ');
+            $this->line('');
+            $this->call('info');
+            return false;
+        }
+        $name = $this->ask('Project name: ');
+        $type = $this->getProjectType();
+        $project = $this->createProjectOnMeatApi($name, $project_code, $type);
+
+        return $project;
     }
 
 }

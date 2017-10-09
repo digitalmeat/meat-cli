@@ -21,7 +21,7 @@ trait CanCloneRepositories
     {
         if (file_exists($this->working_path)) {
             $this->warn("The folder $this->working_path already exists. Skipping git clone...");
-            if (!(new ProjectHelper())->isThisFolderAProject($this->working_path)) {
+            if (!(new ProjectHelper())->isThisFolderAProjectRepository($this->working_path)) {
                 throw new \Exception('Folder already exists and could not find a project');
             }
             $this->setProjectNameBasedOnGitRepository();
