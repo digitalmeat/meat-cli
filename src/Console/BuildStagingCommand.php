@@ -15,7 +15,7 @@ class BuildStagingCommand extends MeatCommand
      *
      * @var string
      */
-    protected $signature = 'build-staging 
+    protected $signature = 'staging:build 
                             {project-code? : Code of the project. When is not provided, the name of the current folder will be used}
                             {--d|domain= : Domain name. If not provided, it will be automatically asociated';
 

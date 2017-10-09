@@ -11,7 +11,7 @@ class FindStagingCommand extends MeatCommand
      *
      * @var string
      */
-    protected $signature = 'find-staging 
+    protected $signature = 'staging:find 
                             {project-code? : Code of the project. When is not provided, the name of the project in current folder will be used}';
 
     /**
@@ -57,7 +57,7 @@ class FindStagingCommand extends MeatCommand
                     $this->printBigMessage('Site found and was associated to the project 🙌');
                     $found = true;
                 } catch (\Exception $e) {
-                    $this->error('Could not locate your staging site on forge. You have to set it manually or create a new one with "meat build-staging"');
+                    $this->error('Could not locate your staging site on forge. You have to set it manually or create a new one with "meat staging:build"');
                     $found = false;
                     return;
                 }
