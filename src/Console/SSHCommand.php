@@ -11,7 +11,9 @@ class SSHCommand extends MeatCommand
      *
      * @var string
      */
-    protected $signature = 'ssh {--p|production : Connect to production server instead }';
+    protected $signature = 'ssh 
+                            {--p|production : Connect to production server instead } 
+                            {--c|command= : Send this single command and the disconnect}';
 
     /**
      * The console command description.
@@ -47,8 +49,11 @@ class SSHCommand extends MeatCommand
             $this->info('Connecting to staging server...');
         }
 
-
-        passthru("ssh forge@$ip -t 'cd $folder ; bash -l'");
+        $ssh_command = "cd $folder; bash -l";
+        if ($command = $this->option('command')) {
+            $ssh_command = "cd $folder; $command";
+        }
+        passthru("ssh forge@$ip -t '$ssh_command'");
 
     }
 }
