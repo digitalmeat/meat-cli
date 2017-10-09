@@ -11,6 +11,7 @@ use Meat\Cli\Console\CreateCommand;
 use Meat\Cli\Console\DeployNowCommand;
 use Meat\Cli\Console\FindStagingCommand;
 use Meat\Cli\Console\InstallCommand;
+use Meat\Cli\Console\LoginCommand;
 use Meat\Cli\Console\MountCommand;
 use Meat\Cli\Console\ProjectInfoCommand;
 use Meat\Cli\Console\SSHCommand;
@@ -36,7 +37,8 @@ class Kernel extends ConsoleKernel
         BuildStagingCommand::class,
         DeployNowCommand::class,
         FindStagingCommand::class,
-        SSHCommand::class
+        SSHCommand::class,
+        LoginCommand::class
     ];
 
     /**

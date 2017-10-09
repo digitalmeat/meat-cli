@@ -9,7 +9,7 @@ use Meat\Cli\Traits\canLogin;
  * Class InstallCommand
  * @package Meat\Cli\Console
  */
-class InstallCommand extends MeatCommand
+class LoginCommand extends MeatCommand
 {
     use canLogin;
 
@@ -22,14 +22,14 @@ class InstallCommand extends MeatCommand
      *
      * @var string
      */
-    protected $signature = 'init';
+    protected $signature = 'login';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'This is the installation process. Create your personal .meat file once so you can easily run your commands afterwards';
+    protected $description = 'Login into Meat Cloud and save the access token. ';
 
     /**
      * @var array
@@ -40,15 +40,8 @@ class InstallCommand extends MeatCommand
      *
      */
     public function handle() {
-        $this->printBigMessage('MEAT CLI Installation ✌️');
+        $this->checkIfAccessTokenWorks();
 
-
-        if ($this->configurationHandler->isInstalled()) {
-            if (!$this->confirm('MEAT Cli is already installed. Do you want to update your ~/.meat file?')) {
-                return;
-            }
-        }
-        $this->askDatabaseInformation();
         $this->askMeatCredentials();
         $this->finishMessage();
 
@@ -79,9 +72,22 @@ class InstallCommand extends MeatCommand
     {
         $this->info('');
         $this->info('==========================================');
-        $this->info('Installation complete!');
+        $this->info('Loged in!');
         $this->info('==========================================');
     }
+    protected function checkIfAccessTokenWorks()
+    {
+        $works = false;
+        try {
+            $me = $this->api->me();
+            $works = true;
+        } catch (\Exception $e) {
 
+        }
+
+        if ($works) {
+            $this->warn('You current access token appers to work just fine. ');
+        }
+    }
 
 }
