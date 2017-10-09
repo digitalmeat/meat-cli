@@ -219,7 +219,7 @@ class MountCommand extends MeatCommand
 
             $configuration = $this->getDotEnvConfiguration();
             if (!$configuration['APP_KEY']) {
-                $this->info('APP_KEY is empty. Running key:genrate');
+                $this->info('APP_KEY is empty. Running key:generate');
                 $this->runProcess('php artisan key:generate');
             }
 
