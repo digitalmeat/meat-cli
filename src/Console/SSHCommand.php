@@ -13,7 +13,7 @@ class SSHCommand extends MeatCommand
      */
     protected $signature = 'ssh 
                             {--p|production : Connect to production server instead } 
-                            {--c|command= : Send this single command and the disconnect}';
+                            {--c|command= : Execute command and disconnect }';
 
     /**
      * The console command description.
@@ -40,7 +40,7 @@ class SSHCommand extends MeatCommand
             $this->info('Connecting to production server...');
         } else {
             if (!$project || !$project['forge_staging_ip']) {
-                $this->error('Sorry, I do no know the IP of the staging server. Set it up on Meat Cloud first. ');
+                $this->error('Sorry, I do not know the IP of the staging server. Set it up on Meat Cloud first. ');
                 exit(1);
             }
 
