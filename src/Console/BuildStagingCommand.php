@@ -23,7 +23,7 @@ class BuildStagingCommand extends MeatCommand
      *
      * @var string
      */
-    protected $description = 'Create a Bitbucket repository';
+    protected $description = 'Build a staging environment on Laravel Forge. (50% WIP)';
 
     /**
      * Execute the console command.
@@ -34,14 +34,7 @@ class BuildStagingCommand extends MeatCommand
     {
         $this->printBigMessage('Building staging on Laravel Forge... ');
 
-        $project_code = $this->argument('project-code');
-        if (!$project_code) {
-            $folder = getcwd();
-            if (!(new ProjectHelper())->isThisFolderAProject($folder)) {
-                throw new \Exception('Could not find a project on ' . $folder);
-            }
-            $project_code = (new GitHelper())->getRespositoryName($folder);
-        }
+        $project_code = $this->getProjectCode();
 
         $this->api->setupProjectForge($project_code, get_project_assets_compilation_script('production'));
 

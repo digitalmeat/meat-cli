@@ -8,6 +8,8 @@ use Meat\Cli\Console\BuildStagingCommand;
 use Meat\Cli\Console\CompileAssetsCommand;
 use Meat\Cli\Console\CreateBitbucketRepositoryCommand;
 use Meat\Cli\Console\CreateCommand;
+use Meat\Cli\Console\DeployNowCommand;
+use Meat\Cli\Console\FindStagingCommand;
 use Meat\Cli\Console\InstallCommand;
 use Meat\Cli\Console\MountCommand;
 use Meat\Cli\Console\ProjectInfoCommand;
@@ -30,7 +32,9 @@ class Kernel extends ConsoleKernel
         CreateCommand::class,
         WatchAssetsCommand::class,
         CompileAssetsCommand::class,
-        BuildStagingCommand::class
+        BuildStagingCommand::class,
+        DeployNowCommand::class,
+        FindStagingCommand::class
     ];
 
     /**

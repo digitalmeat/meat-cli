@@ -3,8 +3,10 @@
 namespace Meat\Cli\Console;
 use Illuminate\Console\Command;
 use Meat\Cli\Helpers\ConfigurationHandler;
+use Meat\Cli\Helpers\GitHelper;
 use Meat\Cli\Helpers\MeatAPI;
 use Meat\Cli\Helpers\ProcessRunner;
+use Meat\Cli\Helpers\ProjectHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
@@ -115,10 +117,14 @@ class MeatCommand extends Command
      */
     protected function printBigMessage($msg)
     {
+        $length = strlen($msg) + 5;
+        if ($length <= 60) {
+            $length = 60;
+        }
         $this->line('');
-        $this->line('=============================');
+        $this->line(str_pad('========', $length, '='));
         $this->line($msg);
-        $this->line('=============================');
+        $this->line(str_pad('========', $length, '='));
         $this->line('');
     }
 
@@ -136,5 +142,40 @@ class MeatCommand extends Command
         $question->setHidden(true)->setHiddenFallback($fallback);
 
         return $this->output->askQuestion($question);
+    }
+    /**
+     * @return array|bool|string
+     * @throws \Exception
+     */
+    protected function getProjectCode()
+    {
+        $project_code = $this->argument('project-code');
+        if (!$project_code) {
+            $folder = getcwd();
+            if (!(new ProjectHelper())->isThisFolderAProject($folder)) {
+                throw new \Exception('Could not find a project on ' . $folder);
+            }
+            $project_code = (new GitHelper())->getRespositoryName($folder);
+        }
+
+        return $project_code;
+    }
+    /**
+     * @return mixed|null
+     */
+    protected function getProject()
+    {
+        $project_code = $this->getProjectCode();
+
+        $project = null;
+        try {
+            $project = $this->api->getProject($project_code);
+        } catch (\Exception $e) {
+            if ($e->getCode() == 404) {
+                $this->error('The project "' . $project_code . '" is not created on MEAT Cloud... ');
+            }
+        }
+
+        return $project;
     }
 }

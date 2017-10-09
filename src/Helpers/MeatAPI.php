@@ -189,4 +189,20 @@ class MeatAPI
         ]);
     }
 
+    public function deployNow($project_code)
+    {
+        return $this->post("projects/{$project_code}/deploy-now");
+    }
+
+    public function autoFindForgeSite($id, $domain = null)
+    {
+        return $this->post("projects/{$id}/auto-find-staging", [
+            'domain' => $domain
+        ]);
+    }
+    public function getStagingSites()
+    {
+        return collect($this->get('forge/staging/sites'));
+    }
+
 }
