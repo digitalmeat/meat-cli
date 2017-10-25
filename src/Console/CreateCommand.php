@@ -68,7 +68,7 @@ class CreateCommand extends MeatCommand
         if ($staging) {
             $this->info('Setting up staging...');
             try {
-                $project = $this->api->setupProjectStaging($project['id'], get_project_assets_compilation_script('production'));
+                $project = $this->api->setupProjectStaging($project['id'], get_project_assets_compilation_script('production'),null, @file_get_contents('.env'));
             } catch (\Exception $e) {
                 $this->error('Something went wrong creating the staging...');
                 $staging = false;

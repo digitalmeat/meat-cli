@@ -3,6 +3,7 @@
 namespace Meat\Cli\Console;
 
 use M1\Env\Parser;
+use Meat\Cli\Helpers\BrowserHelper;
 use Meat\Cli\Traits\CanCloneRepositories;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
@@ -108,10 +109,11 @@ class MountCommand extends MeatCommand
         }
 
         if ($shouldConfigureDotEnv === true) {
-            $dotEnv = new Parser(file_get_contents(getcwd() . DIRECTORY_SEPARATOR . '.env.example'));
-            $dotEnvConfiguration = $dotEnv->getContent();
             $this->printBigMessage('Creating .env interactively');
             $this->line('You can use "-" character to leave the field empty');
+
+            $dotEnv = new Parser(file_get_contents(getcwd() . DIRECTORY_SEPARATOR . '.env.example'));
+            $dotEnvConfiguration = $dotEnv->getContent();
             $newEnv = [];
 
             foreach ($dotEnvConfiguration as $key => $value) {
@@ -375,7 +377,7 @@ class MountCommand extends MeatCommand
         }
 
         $this->info('Opening browser: ' . $url);
-        $this->runProcess('/usr/bin/open \'' . escapeshellarg($url) . '\'');
+        (new BrowserHelper())->openUrl($url);
 
         return $this;
     }

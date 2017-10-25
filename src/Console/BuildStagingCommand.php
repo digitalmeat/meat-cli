@@ -3,6 +3,7 @@
 namespace Meat\Cli\Console;
 
 
+use Meat\Cli\Helpers\BrowserHelper;
 use Meat\Cli\Helpers\GitHelper;
 use Meat\Cli\Helpers\ProjectHelper;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -33,12 +34,15 @@ class BuildStagingCommand extends MeatCommand
      */
     public function handle()
     {
-        $this->printBigMessage('Building staging on Laravel Forge... ');
+        $this->line('Building staging on Laravel Forge. This may take a while...');
 
         $project_code = $this->getProjectCode();
 
-        $response = $this->api->setupProjectStaging($project_code, get_project_assets_compilation_script('production'));
-        var_dump($response);
+        $project = $this->api->setupProjectStaging($project_code, get_project_assets_compilation_script('production'), null, @file_get_contents('.env'));
+
+        $this->printBigMessage('Staging site created successfully on http://' . $project->forge_staging_domain);
+
+        (new BrowserHelper())->openUrl('http://' . $project->forge_staging_domain);
 
     }
 

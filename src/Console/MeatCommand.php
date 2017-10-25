@@ -196,18 +196,19 @@ class MeatCommand extends Command
         return $project_code;
     }
     /**
+     * @param null $projectCode
      * @return mixed|null
      */
-    protected function getProject($project_code = null)
+    protected function getProject($projectCode = null)
     {
-        $project_code = $project_code ? : $this->getProjectCode();
+        $projectCode = $projectCode ? : $this->getProjectCode();
 
         $project = null;
         try {
-            $project = $this->api->getProject($project_code);
+            $project = $this->api->getProject($projectCode);
         } catch (\Exception $e) {
             if ($e->getCode() == 404) {
-                $this->warn('The project "' . $project_code . '" is not created on MEAT Cloud... ');
+                $this->warn('The project "' . $projectCode . '" is not created on MEAT Cloud... ');
             }
         }
 
