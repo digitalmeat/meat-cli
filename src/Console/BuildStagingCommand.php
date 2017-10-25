@@ -40,9 +40,9 @@ class BuildStagingCommand extends MeatCommand
 
         $project = $this->api->setupProjectStaging($project_code, get_project_assets_compilation_script('production'), null, @file_get_contents('.env'));
 
-        $this->printBigMessage('Staging site created successfully on http://' . $project->forge_staging_domain);
+        $this->printBigMessage('Staging site created successfully on http://' . $project['forge_staging_domain']);
 
-        (new BrowserHelper())->openUrl('http://' . $project->forge_staging_domain);
+        (new BrowserHelper())->openUrl('http://' . $project['forge_staging_domain']);
 
     }
 
