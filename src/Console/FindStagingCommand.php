@@ -50,17 +50,15 @@ class FindStagingCommand extends MeatCommand
         }
 
         if (!$found) {
-            if ($this->confirm('Do you know the name of the domain on staging?', false)) {
-                $domain = $this->anticipate('Enter domain name: ', $this->api->getStagingSites()->pluck('domain')->toArray());
-                try {
-                    $this->api->autoFindForgeSite($project['id'], $domain);
-                    $this->printBigMessage('Site found and was associated to the project 🙌');
-                    $found = true;
-                } catch (\Exception $e) {
-                    $this->error('Could not locate your staging site on forge. You have to set it manually or create a new one with "meat staging:build"');
-                    $found = false;
-                    return;
-                }
+            $domain = $this->anticipate('Enter domain name: ', $this->api->getStagingSites()->pluck('domain')->toArray());
+            try {
+                $this->api->autoFindForgeSite($project['id'], $domain);
+                $this->printBigMessage('Site found and was associated to the project 🙌');
+                $found = true;
+            } catch (\Exception $e) {
+                $this->error('Could not locate your staging site on forge. You have to set it manually or create a new one with "meat staging:build"');
+                $found = false;
+                return;
             }
         }
 
