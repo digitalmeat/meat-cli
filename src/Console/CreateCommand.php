@@ -108,7 +108,7 @@ class CreateCommand extends MeatCommand
         $escapedFolder = escapeshellarg($folder);
         $repos = [
             'themosis'  => 'composer create-project digitalmeat/themosis:dev-master ' . $escapedFolder,
-            'laravel'  => 'laravel new ' . $escapedFolder . ' > /dev/null 2>&1 || composer create-project --prefer-dist laravel/laravel ' . $escapedFolder,
+            'laravel'  => 'composer create-project --prefer-dist laravel/laravel ' . $escapedFolder,
             'blank'  => 'mkdir ' . $escapedFolder . ' && cd ' . $escapedFolder . ' && echo "# Readme" > readme.md',
         ];
 
@@ -125,7 +125,7 @@ class CreateCommand extends MeatCommand
         $command = $this->getCreateCommandByProjectType($base, $folder);
         $this->info("Installing base on $folder");
 
-        $this->runProcess($command);
+        passthru($command);
 
         return $this;
     }

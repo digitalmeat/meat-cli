@@ -184,7 +184,7 @@ class MeatAPI
         $this->client = new Client([
             'base_uri' => config('api_url', 'https://api.meat.cl/api/'),
             // You can set any number of default request options.
-            'timeout'  => 30.0,
+            'timeout'  => 60.0,
             'headers' => [
                 'Accept'     => 'application/json',
             ],

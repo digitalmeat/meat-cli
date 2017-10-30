@@ -18,7 +18,7 @@ class BuildStagingCommand extends MeatCommand
      */
     protected $signature = 'staging:build 
                             {project-code? : Code of the project. When is not provided, the name of the current folder will be used}
-                            {--d|domain= : Domain name. If not provided, it will be automatically asociated';
+                            {--d|domain= : Domain name. If not provided, it will be automatically asociated}';
 
     /**
      * The console command description.
@@ -38,7 +38,7 @@ class BuildStagingCommand extends MeatCommand
 
         $project_code = $this->getProjectCode();
 
-        $project = $this->api->setupProjectStaging($project_code, get_project_assets_compilation_script('production'), null, @file_get_contents('.env'));
+        $project = $this->api->setupProjectStaging($project_code, get_project_assets_compilation_script('production'), $this->option('domain') ?? null, @file_get_contents('.env'));
 
         $this->printBigMessage('Staging site created successfully on http://' . $project['forge_staging_domain']);
 
